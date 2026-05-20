@@ -10,7 +10,7 @@
 ---
 
 # سایت فروشگاهی سبک مناسب هاست ارزان (PMMIS-Shop-Lite)
-> ⚠️ **For Persian documentation, please see [README.fa.md](README.fa.md)**
+> ⚠️ **For English documentation, please see [README.md](README.md)**
 
 
 یک بستر تجارت الکترونیک با کارایی بسیار بالا، مقرون‌به‌صرفه و بهینه‌سازی‌شده برای موتورهای جستجو که به طور دقیق برای اجرا با سرعت فوق‌العاده روی محیط‌های میزبانی اشتراکی استاندارد پی‌اچ‌پی طراحی شده است.

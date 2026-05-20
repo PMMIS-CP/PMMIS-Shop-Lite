@@ -11,7 +11,7 @@
 
 # PMMIS-Shop-Lite
 
-> ⚠️ **برای مشاهده مستندات به زبان انگلیسی، به [README.md](README.md) مراجعه کنید.**
+> ⚠️ **برای مشاهده مستندات به زبان فارسی، به [README.fa.md](README.fa.md) مراجعه کنید.**
 
 A high-performance, budget-friendly, and SEO-native e-commerce platform carefully tailored to run blazingly fast on standard PHP shared hosting environments while retaining absolute core enterprise features.
 ---
