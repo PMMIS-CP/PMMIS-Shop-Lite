@@ -1,7 +1,19 @@
+<div align="center">
+  <img src="https://img.shields.io/badge/Laravel-13-ff2d20.svg?logo=laravel&logoColor=white" alt="Laravel 13">
+  <img src="https://img.shields.io/badge/PHP-8.3-777bb4.svg?logo=php&logoColor=white" alt="PHP 8.4">
+</div>
+<div align="center">
+  <a href="README.md"><img src="https://img.shields.io/badge/lang-English-red.svg" alt="English"></a>
+  <a href="README.fa.md"><img src="https://img.shields.io/badge/lang-فارسی-green.svg" alt="فارسی"></a>
+</div>
+
+---
+
 # PMMIS-Shop-Lite
 
-A high-performance, budget-friendly, and SEO-native e-commerce platform carefully tailored to run blazingly fast on standard PHP shared hosting environments while retaining absolute core enterprise features.
+> ⚠️ **برای مشاهده مستندات به زبان انگلیسی، به [README.md](README.md) مراجعه کنید.**
 
+A high-performance, budget-friendly, and SEO-native e-commerce platform carefully tailored to run blazingly fast on standard PHP shared hosting environments while retaining absolute core enterprise features.
 ---
 
 ## 🚀 Core Philosophy & Architecture
@@ -52,3 +64,10 @@ The platform consolidates all automation into a single system cron configuration
 *   **Hourly:** The `livewire:clean-temporary-uploads` command to instantly wipe abandoned multi-part file chunks, ensuring temporary admin uploads never fill up the local disk.
 *   **Every 6 Hours:** Fetching and caching current exchange rates.
 *   **Nightly:** Lightweight, database-only backups (`spatie/laravel-backup` with asset exclusions) zipped and pushed directly to remote S3 storage, keeping the host disk untouched.
+
+## License
+
+This project is licensed under the terms of the **PMMIS Source-Available License**. 
+It is provided strictly as a portfolio piece for performance evaluation and local testing. 
+Commercial use or deployment to public production servers is strictly prohibited. 
+See the [LICENSE](LICENSE) file for full details.

@@ -1,0 +1,40 @@
+PMMIS SOURCE-AVAILABLE LICENSE
+
+Copyright (c) 2026 PMMIS
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this 
+software and associated documentation files (the "Software"), to view, download, 
+and run the Software solely within a LOCAL DEVELOPMENT ENVIRONMENT for personal, 
+educational, or testing purposes.
+
+PROJECT INTENT & PURPOSE:
+This Software is strictly published as a professional portfolio showcase by the developer. 
+Its public availability is intended solely to demonstrate the developer's technical skills, 
+architecture design, and capabilities. Any usage of this Software must strictly serve 
+the purpose of evaluating, testing, or reviewing the developer's work within a local setup.
+
+CONDITIONS AND RESTRICTIONS:
+
+1. LOCAL USE ONLY: You are strictly permitted to run this Software on "localhost" 
+   (or equivalent private local network loops). Deployment to any public-facing 
+   server, cloud infrastructure, or production environment is expressly prohibited.
+
+2. NON-COMMERCIAL USE ONLY: You may not use this Software, or any substantial portion 
+   of it, for any commercial purpose, including but not limited to:
+   - Running a live e-commerce store or commercial website.
+   - Selling, leasing, or sublicensing the Software.
+   - Using the Software to provide paid services to third parties.
+
+3. MODIFICATIONS: You may modify the Software for your personal local testing and 
+   performance evaluation, but any redistribution of modified versions must retain 
+   this exact license and remain completely non-commercial and restricted to local environments.
+
+4. ATTRIBUTION: The above copyright notice, the developer's portfolio intent notice, 
+   and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
+INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
+PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT 
+HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION 
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
