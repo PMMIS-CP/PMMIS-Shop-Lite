@@ -122,5 +122,10 @@ return [
         'driver' => env('APP_MAINTENANCE_DRIVER', 'file'),
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
-
+    
+    'remove_html_comments' => env('REMOVE_HTML_COMMENTS', false),
+    'enable_csp' => env('ENABLE_CSP', false),
+    'enable_hsts' => env('ENABLE_HSTS', false),
+    'show_powered_by' => env('SHOW_POWERED_BY', false),
+    'cache_ttl' => env('CACHE_TTL', 300),
 ];

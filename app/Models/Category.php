@@ -6,19 +6,24 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Translatable\HasTranslations;
 use Illuminate\Database\Eloquent\Relations\{BelongsTo, HasMany};
+use Illuminate\Database\Eloquent\Builder;
 
 class Category extends Model
 {
     use HasTranslations, SoftDeletes;
 
     protected $fillable = ['name', 'slug', 'parent_id', 'is_active', 'sort_order'];
+    
     public array $translatable = ['name', 'slug'];
 
     protected $casts = [
         'is_active' => 'boolean',
         'name' => 'array',
         'slug' => 'array',
+        'deleted_at' => 'datetime',
     ];
+
+    protected $dates = ['deleted_at'];
 
     public function parent(): BelongsTo
     {
@@ -28,5 +33,55 @@ class Category extends Model
     public function children(): HasMany
     {
         return $this->hasMany(Category::class, 'parent_id')->orderBy('sort_order');
+    }
+
+    public function getUrlAttribute(): string
+    {
+        $locale = app()->getLocale();
+        $slug = $this->getTranslation('slug', $locale);
+        
+        return route('category.show', $slug);
+    }
+
+    public function getFullNameAttribute(): string
+    {
+        $name = $this->getTranslation('name', app()->getLocale());
+        
+        if ($this->parent) {
+            return $this->parent->full_name . ' > ' . $name;
+        }
+        
+        return $name;
+    }
+
+    public function getBreadcrumbAttribute(): array
+    {
+        $breadcrumb = [];
+        $current = $this;
+        
+        while ($current) {
+            $breadcrumb[] = [
+                'name' => $current->name,
+                'url'  => $current->url,
+            ];
+            $current = $current->parent;
+        }
+        
+        return array_reverse($breadcrumb);
+    }
+
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query->where('is_active', true);
+    }
+
+    public function scopeParents(Builder $query): Builder
+    {
+        return $query->whereNull('parent_id');
+    }
+
+    public function scopeOrdered(Builder $query): Builder
+    {
+        return $query->orderBy('sort_order')->orderBy('id');
     }
 }
