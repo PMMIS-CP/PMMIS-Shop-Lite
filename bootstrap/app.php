@@ -3,6 +3,9 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use App\Http\Middleware\OptimizeResponse\OptimizeHtml;
+use App\Http\Middleware\OptimizeResponse\AddSecurityHeaders;
+use App\Http\Middleware\OptimizeResponse\AddCacheHeaders;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -11,11 +14,17 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->append(\App\Http\Middleware\OptimizeResponse::class);
-        $middleware->append(\App\Http\Middleware\DecodeSlug::class);
+        // Add security and optimization middleware in correct order
+        $middleware->append(OptimizeHtml::class);
+        $middleware->append(AddSecurityHeaders::class);
+        
+        // CacheGuestResponses is already added via web group
         $middleware->web(append: [
-          \App\Http\Middleware\CacheGuestResponses::class,
+            AddCacheHeaders::class,
+            \App\Http\Middleware\CacheGuestResponses::class,
         ]);
+        
+        $middleware->append(\App\Http\Middleware\DecodeSlug::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
