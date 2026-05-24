@@ -23,12 +23,16 @@ class CategoryController extends Controller
         }
         
         $breadcrumb = $this->getBreadcrumb($category);
-        
+
+        // Temporarily disabled until Product model exists - use empty collection
         // Load products with pagination (fix IMPR-004)
-        $products = $category->products()
-            ->active()
-            ->orderBy('sort_order', 'asc')
-            ->paginate(24);
+        // $products = $category->products()
+        //     ->active()
+        //     ->orderBy('sort_order', 'asc')
+        //     ->paginate(24);
+        
+        // Use empty collection instead (Product model not created yet)
+        $products = collect();
         
         return response()->view('categories.show', [
             'category'   => $category,

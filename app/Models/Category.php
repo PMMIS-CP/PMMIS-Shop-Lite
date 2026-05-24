@@ -94,4 +94,27 @@ class Category extends Model
     {
         return $query->orderBy('sort_order')->orderBy('id');
     }
+
+    // Boot method to handle slug synchronization for SQLite
+    protected static function boot()
+    {
+        parent::boot();
+
+        // Only add this event for SQLite database (to sync slug_fa and slug_en columns)
+        $connection = config('database.default');
+        $driver = config("database.connections.{$connection}.driver");
+        
+        if ($driver === 'sqlite') {
+            static::saving(function ($category) {
+                $locales = ['fa', 'en'];
+                foreach ($locales as $locale) {
+                    $slugField = 'slug_' . $locale;
+                    $slugValue = $category->getTranslation('slug', $locale);
+                    if ($slugValue) {
+                        $category->$slugField = $slugValue;
+                    }
+                }
+            });
+        }
+    }
 }
