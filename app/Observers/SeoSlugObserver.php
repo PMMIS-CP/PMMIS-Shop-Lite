@@ -14,7 +14,8 @@ class SeoSlugObserver
 
     public function updating(Category $model): void
     {
-        if ($model->isDirty('name')) {
+        // Only regenerate if name changed AND slug was not manually modified
+        if ($model->isDirty('name') && !$model->isDirty('slug')) {
             $this->generateSlugs($model);
         }
     }
@@ -51,7 +52,6 @@ class SeoSlugObserver
         $string = str_replace(['‌', ' '], '-', $string);
         $string = preg_replace('/[^a-z0-9\x{0621}-\x{06CC}\-]+/u', '', $string);
         $string = preg_replace('/-+/', '-', $string);
-        
         return trim($string, '-');
     }
 
@@ -59,7 +59,6 @@ class SeoSlugObserver
     {
         $persian = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
         $english = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
-        
         return str_replace($persian, $english, $string);
     }
 }

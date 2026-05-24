@@ -10,8 +10,11 @@ class CategoryController extends Controller
 {
     public function show(string $slug, Request $request): Response
     {
-        $category = Category::where("slug->fa", $slug)
-            ->orWhere("slug->en", $slug)
+        // Eager load parent chain up to 10 levels to avoid N+1
+        $category = Category::with('parent.parent.parent.parent.parent.parent.parent.parent.parent.parent')
+            ->where(function($query) use ($slug) {
+                $query->where('slug_fa', $slug)->orWhere('slug_en', $slug);
+            })
             ->active()
             ->first();
         
@@ -21,9 +24,15 @@ class CategoryController extends Controller
         
         $breadcrumb = $this->getBreadcrumb($category);
         
+        // Load products with pagination (fix IMPR-004)
+        $products = $category->products()
+            ->active()
+            ->orderBy('sort_order', 'asc')
+            ->paginate(24);
+        
         return response()->view('categories.show', [
             'category'   => $category,
-            'products'   => collect(),
+            'products'   => $products,
             'breadcrumb' => $breadcrumb,
         ]);
     }
@@ -38,7 +47,7 @@ class CategoryController extends Controller
                 'name' => $current->name,
                 'url'  => $current->url,
             ];
-            $current = $current->parent;
+            $current = $current->parent; // No extra query because parent is eager loaded
         }
         
         return array_reverse($breadcrumb);

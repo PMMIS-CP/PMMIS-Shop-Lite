@@ -31,7 +31,7 @@ class AddCacheHeaders
             $response->headers->set('Pragma', 'public');
         } 
         // Cache public pages with language consideration
-        elseif ($response->getStatusCode() === 200 && !str_starts_with($path, 'admin')) {
+        elseif ($response->getStatusCode() === 200 && !$this->isAdminRoute($request)) {
             $cacheTime = config('app.cache_ttl', 300);
             $response->headers->set('Cache-Control', "public, max-age={$cacheTime}, must-revalidate");
             $response->headers->set('Expires', gmdate('D, d M Y H:i:s', time() + $cacheTime) . ' GMT');
@@ -52,6 +52,27 @@ class AddCacheHeaders
         
         foreach ($extensions as $ext) {
             if (Str::endsWith($path, '.' . $ext)) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
+    protected function isAdminRoute(Request $request): bool
+    {
+        // Add null coalescing to ensure array return type
+        $adminPrefixes = config('app.admin_prefixes', ['admin', 'filament', 'nova', 'panel']);
+        
+        // Ensure it's an array (if config returns null, use default)
+        if (!is_array($adminPrefixes)) {
+            $adminPrefixes = ['admin', 'filament', 'nova', 'panel'];
+        }
+        
+        $path = $request->path();
+        
+        foreach ($adminPrefixes as $prefix) {
+            if ($path === $prefix || str_starts_with($path, $prefix . '/')) {
                 return true;
             }
         }

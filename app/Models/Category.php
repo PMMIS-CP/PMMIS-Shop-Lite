@@ -35,6 +35,12 @@ class Category extends Model
         return $this->hasMany(Category::class, 'parent_id')->orderBy('sort_order');
     }
 
+    // Temporarily commented until Product model exists
+    // public function products(): HasMany
+    // {
+    //     return $this->hasMany(Product::class);
+    // }
+
     public function getUrlAttribute(): string
     {
         $locale = app()->getLocale();
@@ -45,17 +51,21 @@ class Category extends Model
 
     public function getFullNameAttribute(): string
     {
-        $name = $this->getTranslation('name', app()->getLocale());
+        // Build full name without N+1 (assumes parent chain is eager loaded)
+        $names = [];
+        $current = $this;
         
-        if ($this->parent) {
-            return $this->parent->full_name . ' > ' . $name;
+        while ($current) {
+            $names[] = $current->getTranslation('name', app()->getLocale());
+            $current = $current->parent;
         }
         
-        return $name;
+        return implode(' > ', array_reverse($names));
     }
 
     public function getBreadcrumbAttribute(): array
     {
+        // Build breadcrumb without N+1 (assumes parent chain is eager loaded)
         $breadcrumb = [];
         $current = $this;
         

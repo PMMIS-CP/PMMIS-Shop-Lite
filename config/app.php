@@ -128,4 +128,15 @@ return [
     'enable_hsts' => env('ENABLE_HSTS', false),
     'show_powered_by' => env('SHOW_POWERED_BY', false),
     'cache_ttl' => env('CACHE_TTL', 300),
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Admin Route Prefixes
+    |--------------------------------------------------------------------------
+    |
+    | These prefixes are used to detect admin routes for caching control.
+    |
+    */
+    'admin_prefixes' => env('ADMIN_PREFIXES', ['admin', 'filament', 'nova', 'panel']),
 ];

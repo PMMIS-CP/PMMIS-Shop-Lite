@@ -6,6 +6,7 @@ use Illuminate\Foundation\Configuration\Middleware;
 use App\Http\Middleware\OptimizeResponse\OptimizeHtml;
 use App\Http\Middleware\OptimizeResponse\AddSecurityHeaders;
 use App\Http\Middleware\OptimizeResponse\AddCacheHeaders;
+use App\Http\Middleware\CacheGuestResponses;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -14,17 +15,16 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // Add security and optimization middleware in correct order
+        // Global middleware (runs for every request)
         $middleware->append(OptimizeHtml::class);
         $middleware->append(AddSecurityHeaders::class);
-        
-        // CacheGuestResponses is already added via web group
-        $middleware->web(append: [
-            AddCacheHeaders::class,
-            \App\Http\Middleware\CacheGuestResponses::class,
-        ]);
-        
         $middleware->append(\App\Http\Middleware\DecodeSlug::class);
+        
+        // Web group middleware: CacheGuestResponses must run first to capture final response
+        $middleware->web(prepend: [
+            CacheGuestResponses::class,
+            AddCacheHeaders::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

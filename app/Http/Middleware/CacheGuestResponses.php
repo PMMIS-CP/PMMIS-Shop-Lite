@@ -12,20 +12,29 @@ class CacheGuestResponses
 {
     public function handle(Request $request, Closure $next): Response
     {
-        if (Auth::check() || $request->isMethod('POST')) {
+        // Skip caching for authenticated users and non-GET requests
+        if (Auth::check() || !$request->isMethod('GET')) {
             return $next($request);
         }
 
         $key = 'page_cache_' . md5($request->fullUrl());
 
+        // Return cached response with full headers and status
         if (Cache::has($key)) {
-            return response(Cache::get($key));
+            $cached = Cache::get($key);
+            return response($cached['content'], $cached['status'])
+                ->withHeaders($cached['headers']);
         }
 
         $response = $next($request);
 
-        if ($response->getStatusCode() === 200) {
-            Cache::put($key, $response->getContent(), 3600);
+        // Cache only successful GET responses
+        if ($response->getStatusCode() === 200 && !$request->ajax()) {
+            Cache::put($key, [
+                'content' => $response->getContent(),
+                'headers' => $response->headers->all(),
+                'status'  => $response->getStatusCode(),
+            ], 3600);
         }
 
         return $response;

@@ -10,9 +10,7 @@ class DecodeSlug
     public function handle(Request $request, Closure $next)
     {
         if ($request->route('slug')) {
-            $slug = $request->route('slug');
-            $slug = rawurldecode($slug);
-            $slug = urldecode($slug);
+            $slug = rawurldecode($request->route('slug')); // Single decode is enough
             $request->route()->setParameter('slug', $slug);
         }
         
