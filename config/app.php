@@ -138,5 +138,7 @@ return [
     | These prefixes are used to detect admin routes for caching control.
     |
     */
+
     'admin_prefixes' => env('ADMIN_PREFIXES', ['admin', 'filament', 'nova', 'panel']),
+
 ];

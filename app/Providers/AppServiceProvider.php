@@ -16,5 +16,11 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Category::observe(SeoSlugObserver::class);
+        
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                // \App\Console\Commands\MakeServiceCommand::class,
+            ]);
+        }
     }
 }
