@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Spatie\Translatable\HasTranslations;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 /**
  * @property int $id
@@ -92,7 +93,8 @@ use Illuminate\Support\Facades\Session;
 class Product extends Model
 {
     use HasTranslations, SoftDeletes;
-
+    use HasFactory;
+    
     /**
      * The attributes that are mass assignable.
      */
@@ -363,7 +365,7 @@ class Product extends Model
      * * @param \Illuminate\Database\Eloquent\Builder<static> $query
      * @return \Illuminate\Database\Eloquent\Builder<static>
      */
-    
+
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);
