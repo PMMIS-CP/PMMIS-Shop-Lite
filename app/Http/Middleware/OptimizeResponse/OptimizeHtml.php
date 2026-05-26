@@ -51,7 +51,7 @@ class OptimizeHtml
     {
         $contentType = $response->headers->get('Content-Type');
         
-        if (!$contentType || !is_string($contentType)) {
+        if (!$contentType) {
             return false;
         }
 
@@ -63,13 +63,13 @@ class OptimizeHtml
     {
         $content = $response->getContent();
         
-        if (!is_string($content) || $content === '') {
+        if (empty($content)) {
             return $response;
         }
 
         $compressed = $this->compressHtmlSmart($content);
         
-        if (is_string($compressed) && $compressed !== '') {
+        if (!empty($compressed)) {
             $response->setContent($compressed);
             $response->headers->set('X-HTML-Optimized', '1.0');
         }
