@@ -3,8 +3,37 @@ name: Laravel Testing Pipeline
 on: [push, pull_request]
 
 jobs:
-  test:
+  setup-and-lint:
     runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, bcmath, soap, intl, gd, exif, iconv
+
+      - name: Cache Composer Dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.composer/cache/files
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+
+      - name: Install Dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Lint Code (PHPStan)
+        run: ./vendor/bin/phpstan analyse app --level=5 --no-progress
+
+  test-and-simulate:
+    needs: setup-and-lint
+    runs-on: ubuntu-latest
+    env:
+      DB_CONNECTION: sqlite
+      DB_DATABASE: database/database.sqlite
+      APP_ENV: testing
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -16,15 +45,6 @@ jobs:
           extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, bcmath, soap, intl, gd, exif, iconv
           coverage: xdebug
 
-      - name: Cache Dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.composer/cache/files
-          key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
-
-      - name: Install Dependencies
-        run: composer install --prefer-dist --no-interaction --no-progress
-
       - name: Prepare Environment
         run: |
           cp .env.example .env
@@ -34,12 +54,6 @@ jobs:
 
       - name: Run Migrations
         run: php artisan migrate --force
-        env:
-          DB_CONNECTION: sqlite
-          DB_DATABASE: database/database.sqlite
-
-      - name: Lint Code (PHPStan)
-        run: ./vendor/bin/phpstan analyse app --level=5 --no-progress
 
       - name: Run Integration Simulations
         run: |
@@ -57,16 +71,9 @@ jobs:
               exit(1);
             }
           " > storage/logs/simulation.log 2>&1
-        env:
-          DB_CONNECTION: sqlite
-          DB_DATABASE: database/database.sqlite
 
       - name: Run Feature Tests
         run: php artisan test --parallel --recreate-databases --coverage-text
-        env:
-          DB_CONNECTION: sqlite
-          DB_DATABASE: database/database.sqlite
-          APP_ENV: testing
 
       - name: Upload Logs
         if: always()
