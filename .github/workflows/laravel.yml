@@ -15,7 +15,12 @@ jobs:
         with:
           php-version: '8.3'
           extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, bcmath, intl, gd
-      - run: composer install --prefer-dist --no-interaction
+      - name: Cache Composer Dependencies
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+      - run: composer install --prefer-dist --no-interaction --no-progress
       - name: Lint Code
         run: ./vendor/bin/phpstan analyse --level=5 --no-progress
 
@@ -37,6 +42,12 @@ jobs:
           extensions: pdo, sqlite, pdo_sqlite
           coverage: xdebug
 
+      - name: Restore Composer Dependencies
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+
       - name: Prepare Environment
         run: |
           cp .env.example .env
@@ -47,7 +58,7 @@ jobs:
       - name: Run Feature Tests
         id: run_tests
         run: |
-          echo "### Starting Test Execution..."
+          echo "Starting Test Execution..."
           rm -rf .phpunit.cache
           ./vendor/bin/phpunit tests/Feature/ProductLifecycleTest.php --coverage-text --testdox > test_output.txt 2>&1
           cat test_output.txt
@@ -55,15 +66,15 @@ jobs:
       - name: Final Summary
         if: always()
         run: |
-          echo "## Pipeline Execution Summary" >> $GITHUB_STEP_SUMMARY
+          echo "Pipeline Execution Summary" >> $GITHUB_STEP_SUMMARY
           if [ "${{ job.status }}" == "success" ]; then
-            echo " **Status:** All tasks completed successfully!" >> $GITHUB_STEP_SUMMARY
-            echo " **Details:**" >> $GITHUB_STEP_SUMMARY
+            echo "Status: All tasks completed successfully." >> $GITHUB_STEP_SUMMARY
+            echo "Details:" >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
             cat test_output.txt >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
           else
-            echo " **Status:** Pipeline Failed!" >> $GITHUB_STEP_SUMMARY
+            echo "Status: Pipeline Failed." >> $GITHUB_STEP_SUMMARY
             echo "Please check the logs for more details." >> $GITHUB_STEP_SUMMARY
           fi
 
