@@ -10,29 +10,13 @@ jobs:
     name: Lint & Static Analysis
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
           extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, bcmath, intl, gd
-          coverage: none
-
-      - name: Cache Composer Dependencies
-        id: composer-cache
-        uses: actions/cache@v4
-        with:
-          path: vendor
-          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
-          restore-keys: ${{ runner.os }}-composer-
-
-      - name: Install Dependencies
-        if: steps.composer-cache.outputs.cache-hit != 'true'
-        run: composer install --prefer-dist --no-interaction --no-progress
-
-      - name: Lint Code (PHPStan)
+      - run: composer install --prefer-dist --no-interaction
+      - name: Lint Code
         run: ./vendor/bin/phpstan analyse --level=5 --no-progress
 
   test-and-simulate:
@@ -46,52 +30,49 @@ jobs:
       APP_KEY: base64:aeyk3cW1/014fA1N+Y6kR147h3jK9u8o5+l3y7z2=
 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
           extensions: pdo, sqlite, pdo_sqlite
           coverage: xdebug
 
-      - name: Restore Dependencies
-        uses: actions/cache@v4
-        with:
-          path: vendor
-          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
-
       - name: Prepare Environment
         run: |
           cp .env.example .env
           php artisan key:generate
-          php artisan config:clear
-          mkdir -p storage/logs
           touch database/database.sqlite
-
-      - name: Run Migrations
-        run: php artisan migrate --force
+          php artisan migrate --force
 
       - name: Run Feature Tests
+        id: run_tests
         run: |
-          echo "--- Current Directory ---"
-          pwd
-          echo "--- Listing tests/Feature content ---"
-          ls -la tests/Feature
-          echo "--- Checking if file exists ---"
-          if [ -f "tests/Feature/ProductLifecycleTest.php" ]; then
-            echo "File exists!"
-          else
-            echo "File NOT found!"
-          fi
-          echo "--- Running PHPUnit manually for more info ---"
+          echo "### Starting Test Execution..."
           rm -rf .phpunit.cache
-          ./vendor/bin/phpunit tests/Feature/ProductLifecycleTest.php --debug
-          
-      - name: Upload Logs & Artifacts
+          ./vendor/bin/phpunit tests/Feature/ProductLifecycleTest.php --coverage-text --testdox > test_output.txt 2>&1
+          cat test_output.txt
+
+      - name: Final Summary
+        if: always()
+        run: |
+          echo "## Pipeline Execution Summary" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ job.status }}" == "success" ]; then
+            echo " **Status:** All tasks completed successfully!" >> $GITHUB_STEP_SUMMARY
+            echo " **Details:**" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            cat test_output.txt >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          else
+            echo " **Status:** Pipeline Failed!" >> $GITHUB_STEP_SUMMARY
+            echo "Please check the logs for more details." >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Upload Logs
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: application-logs
-          path: storage/logs/
+          name: test-results
+          path: |
+            test_output.txt
+            storage/logs/
+          if-no-files-found: ignore
