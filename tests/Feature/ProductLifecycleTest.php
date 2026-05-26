@@ -6,13 +6,14 @@ use App\Models\Category;
 use App\Models\Product;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use PHPUnit\Framework\Attributes\Test;
 
 class ProductLifecycleTest extends TestCase
 {
     use RefreshDatabase; 
 
-    /** @test */
-    public function it_can_manage_product_lifecycle_correctly()
+    #[Test]
+    public function it_can_manage_product_lifecycle_correctly(): void
     {
         $category = Category::create([
             'name' => ['fa' => 'تست', 'en' => 'Test'],
@@ -37,8 +38,8 @@ class ProductLifecycleTest extends TestCase
         $this->assertEquals(9, $product->fresh()->stock, 'موجودی انبار باید به ۹ کاهش یابد');
     }
 
-    /** @test */
-    public function it_prevents_purchasing_out_of_stock_products()
+    #[Test]
+    public function it_prevents_purchasing_out_of_stock_products(): void
     {
         $product = Product::factory()->create(['stock' => 0]);
         
