@@ -1,0 +1,76 @@
+name: Laravel Testing Pipeline
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, bcmath, soap, intl, gd, exif, iconv
+          coverage: xdebug
+
+      - name: Cache Dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.composer/cache/files
+          key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
+
+      - name: Install Dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Prepare Environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+          mkdir -p storage/logs
+          touch database/database.sqlite
+
+      - name: Run Migrations
+        run: php artisan migrate --force
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: database/database.sqlite
+
+      - name: Lint Code (PHPStan)
+        run: ./vendor/bin/phpstan analyse app --level=5 --no-progress
+
+      - name: Run Integration Simulations
+        run: |
+          php artisan tinker --execute="
+            try {
+              \$cat = \App\Models\Category::create(['name' => ['fa' => 'تست', 'en' => 'Test'], 'slug' => ['fa' => 'test', 'en' => 'test'], 'is_active' => true]);
+              \$p = \App\Models\Product::create(['name' => ['fa' => 'محصول', 'en' => 'Product'], 'price_usd' => 10, 'category_id' => \$cat->id, 'sku' => 'SKU-' . uniqid(), 'is_active' => true, 'stock' => 10]);
+              if (\$p->isPurchasable() && \$p->decreaseStock(1)) {
+                 echo 'Simulation Passed: Product lifecycle operational.' . PHP_EOL;
+              } else {
+                 throw new \Exception('Simulation Failed: Lifecycle error.');
+              }
+            } catch (\Exception \$e) {
+              echo 'Error: ' . \$e->getMessage() . PHP_EOL;
+              exit(1);
+            }
+          " > storage/logs/simulation.log 2>&1
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: database/database.sqlite
+
+      - name: Run Feature Tests
+        run: php artisan test --parallel --recreate-databases --coverage-text
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: database/database.sqlite
+          APP_ENV: testing
+
+      - name: Upload Logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: logs-and-reports
+          path: storage/logs/
