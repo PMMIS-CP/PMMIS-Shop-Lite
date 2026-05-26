@@ -86,8 +86,9 @@ class Product extends Model
     {
         parent::boot();
 
-        // Clear cache on save/delete
-        static::saved(function () {
+        // Consolidated cache clearing
+        static::saved(function ($product) {
+            Cache::forget("product_{$product->id}");
             Cache::tags(['products'])->flush();
         });
 
@@ -149,20 +150,19 @@ class Product extends Model
     |--------------------------------------------------------------------------
     */
 
+
     /**
      * Get formatted price with currency symbol.
      */
     public function getFormattedPriceAttribute(): string
     {
-        $currency = Session::get('currency', 'USD');
-        $price = $this->price_usd;
+        $currency = app(\Illuminate\Session\Store::class)->get('currency', 'USD');
         
         if ($currency === 'IRR') {
-            $price = $this->price_irr;
-            return number_format($price) . ' ' . __('rial');
+            return number_format($this->price_irr) . ' ' . __('rial');
         }
         
-        return number_format($price, 2) . ' $';
+        return number_format($this->price_usd, 2) . ' $';
     }
 
     /**

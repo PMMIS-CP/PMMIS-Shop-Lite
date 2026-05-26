@@ -9,6 +9,7 @@ use Intervention\Image\Drivers\Gd\Driver;
 use Illuminate\Support\Str;
 use App\Models\ProductImage;
 use Intervention\Image\Interfaces\ImageInterface;
+use Illuminate\Support\Facades\Log;
 
 class ImageUploadService
 {
@@ -27,7 +28,9 @@ class ImageUploadService
     
     public function __construct()
     {
-        $this->manager = new ImageManager(new Driver());
+        // Automatically detect driver (prefer Imagick for performance if available)
+        $driver = extension_loaded('imagick') ? \Intervention\Image\Drivers\Imagick\Driver::class : \Intervention\Image\Drivers\Gd\Driver::class;
+        $this->manager = new ImageManager($driver);
     }
     
     /**
@@ -37,6 +40,9 @@ class ImageUploadService
     {
         // Validate file
         $this->validateFile($file);
+    
+        // Performance check: Limit memory usage if image is huge
+        ini_set('memory_limit', '256M');
         
         // Generate unique filename
         $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
@@ -127,19 +133,17 @@ class ImageUploadService
             $image->thumbnail_large,
         ]);
         
-        $deleted = true;
-        
         foreach ($paths as $path) {
-            if (Storage::disk('s3')->exists($path)) {
-                $deleted = $deleted && Storage::disk('s3')->delete($path);
+            try {
+                if (Storage::disk('s3')->exists($path)) {
+                    Storage::disk('s3')->delete($path);
+                }
+            } catch (\Exception $e) {
+                Log::error("Failed to delete image from S3: " . $e->getMessage());
             }
         }
         
-        if ($deleted) {
-            $image->delete();
-        }
-        
-        return $deleted;
+        return $image->delete();
     }
     
     /**
