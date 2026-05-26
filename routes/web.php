@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\ProductController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -18,8 +19,14 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
+// Category route
 Route::get('/category/{slug}', [CategoryController::class, 'show'])
     ->name('category.show')
+    ->where('slug', '.*');
+
+// Product route
+Route::get('/product/{slug}', [ProductController::class, 'show'])
+    ->name('product.show')
     ->where('slug', '.*');
 
 require __DIR__.'/auth.php';
