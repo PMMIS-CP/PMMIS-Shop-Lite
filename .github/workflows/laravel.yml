@@ -74,11 +74,21 @@ jobs:
         run: php artisan migrate --force
 
       - name: Run Feature Tests
-        # تغییر در اینجا برای عیب‌یابی و اجرای دقیق‌تر:
         run: |
+          echo "--- Current Directory ---"
+          pwd
+          echo "--- Listing tests/Feature content ---"
+          ls -la tests/Feature
+          echo "--- Checking if file exists ---"
+          if [ -f "tests/Feature/ProductLifecycleTest.php" ]; then
+            echo "File exists!"
+          else
+            echo "File NOT found!"
+          fi
+          echo "--- Running PHPUnit manually for more info ---"
           rm -rf .phpunit.cache
-          php artisan test tests/Feature/ProductLifecycleTest.php --coverage-text
-
+          ./vendor/bin/phpunit tests/Feature/ProductLifecycleTest.php --debug
+          
       - name: Upload Logs & Artifacts
         if: always()
         uses: actions/upload-artifact@v4
