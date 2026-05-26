@@ -23,8 +23,6 @@ class Category extends Model
         'deleted_at' => 'datetime',
     ];
 
-    protected $dates = ['deleted_at'];
-
     public function parent(): BelongsTo
     {
         return $this->belongsTo(Category::class, 'parent_id');
@@ -35,18 +33,21 @@ class Category extends Model
         return $this->hasMany(Category::class, 'parent_id')->orderBy('sort_order');
     }
 
-    // Temporarily commented until Product model exists
-    // public function products(): HasMany
-    // {
-    //     return $this->hasMany(Product::class);
-    // }
+    public function products(): HasMany
+    {
+        return $this->hasMany(Product::class);
+    }
+
+    public function descendants(): HasMany
+    {
+        return $this->children()->with('descendants');
+    }
 
     public function getUrlAttribute(): string
     {
         $locale = app()->getLocale();
-        $slug = $this->getTranslation('slug', $locale);
-        
-        return route('category.show', $slug);
+        $slugColumn = 'slug_' . $locale; 
+        return route('category.show', $this->$slugColumn);
     }
 
     public function getFullNameAttribute(): string

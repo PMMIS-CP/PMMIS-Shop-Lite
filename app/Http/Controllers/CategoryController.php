@@ -3,57 +3,34 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
-use Illuminate\Http\Request;
-use Illuminate\Http\Response;
+use Illuminate\View\View;
 
 class CategoryController extends Controller
 {
-    public function show(string $slug, Request $request): Response
+    /**
+     * Display the specified category.
+     */
+    public function show(string $slug): View
     {
-        // Eager load parent chain up to 10 levels to avoid N+1
-        $category = Category::with('parent.parent.parent.parent.parent.parent.parent.parent.parent.parent')
-            ->where(function($query) use ($slug) {
-                $query->where('slug_fa', $slug)->orWhere('slug_en', $slug);
-            })
-            ->active()
-            ->first();
-        
-        if (!$category) {
-            abort(404);
-        }
-        
-        $breadcrumb = $this->getBreadcrumb($category);
+        $locale = app()->getLocale();
+        $column = 'slug_' . $locale;
 
-        // Temporarily disabled until Product model exists - use empty collection
-        // Load products with pagination (fix IMPR-004)
-        // $products = $category->products()
-        //     ->active()
-        //     ->orderBy('sort_order', 'asc')
-        //     ->paginate(24);
-        
-        // Use empty collection instead (Product model not created yet)
-        $products = collect();
-        
-        return response()->view('categories.show', [
+        // Fetch category with parent chain and active status
+        $category = Category::with('parent.parent.parent') // Eager load up to 3 levels
+            ->where($column, $slug)
+            ->active()
+            ->firstOrFail();
+
+        // Paginate active products for this category
+        $products = $category->products()
+            ->active()
+            ->orderBy('sort_order', 'asc')
+            ->paginate(24);
+
+        return view('categories.show', [
             'category'   => $category,
             'products'   => $products,
-            'breadcrumb' => $breadcrumb,
+            'breadcrumb' => $category->breadcrumb, // Uses model accessor
         ]);
-    }
-
-    private function getBreadcrumb(Category $category): array
-    {
-        $breadcrumb = [];
-        $current = $category;
-        
-        while ($current) {
-            $breadcrumb[] = [
-                'name' => $current->name,
-                'url'  => $current->url,
-            ];
-            $current = $current->parent; // No extra query because parent is eager loaded
-        }
-        
-        return array_reverse($breadcrumb);
     }
 }
