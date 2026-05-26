@@ -23,7 +23,7 @@ class CategoryController extends Controller
 
         // Paginate active products for this category
         $products = $category->products()
-            ->active()
+            ->where('is_active', true) // به جای صدا زدن scope
             ->orderBy('sort_order', 'asc')
             ->paginate(24);
 

@@ -8,6 +8,56 @@ use Spatie\Translatable\HasTranslations;
 use Illuminate\Database\Eloquent\Relations\{BelongsTo, HasMany};
 use Illuminate\Database\Eloquent\Builder;
 
+/**
+ * @property int $id
+ * @property array<array-key, mixed> $name
+ * @property array<array-key, mixed> $slug
+ * @property int|null $parent_id
+ * @property bool $is_active
+ * @property int $sort_order
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property \Illuminate\Support\Carbon|null $deleted_at
+ * @property string $slug_fa
+ * @property string $slug_en
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Category> $children
+ * @property-read int|null $children_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Category> $descendants
+ * @property-read int|null $descendants_count
+ * @property-read array $breadcrumb
+ * @property-read string $full_name
+ * @property-read array $translatable_columns_from
+ * @property-read string $url
+ * @property-read Category|null $parent
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Product> $products
+ * @property-read int|null $products_count
+ * @property-read mixed $translations
+ * @method static Builder<static>|Category active()
+ * @method static Builder<static>|Category newModelQuery()
+ * @method static Builder<static>|Category newQuery()
+ * @method static Builder<static>|Category onlyTrashed()
+ * @method static Builder<static>|Category ordered()
+ * @method static Builder<static>|Category parents()
+ * @method static Builder<static>|Category query()
+ * @method static Builder<static>|Category whereCreatedAt($value)
+ * @method static Builder<static>|Category whereDeletedAt($value)
+ * @method static Builder<static>|Category whereId($value)
+ * @method static Builder<static>|Category whereIsActive($value)
+ * @method static Builder<static>|Category whereJsonContainsLocale(string $column, string $locale, ?mixed $value, string $operand = '=')
+ * @method static Builder<static>|Category whereJsonContainsLocales(string $column, array $locales, ?mixed $value, string $operand = '=')
+ * @method static Builder<static>|Category whereLocale(string $column, string $locale)
+ * @method static Builder<static>|Category whereLocales(string $column, array $locales)
+ * @method static Builder<static>|Category whereName($value)
+ * @method static Builder<static>|Category whereParentId($value)
+ * @method static Builder<static>|Category whereSlug($value)
+ * @method static Builder<static>|Category whereSlugEn($value)
+ * @method static Builder<static>|Category whereSlugFa($value)
+ * @method static Builder<static>|Category whereSortOrder($value)
+ * @method static Builder<static>|Category whereUpdatedAt($value)
+ * @method static Builder<static>|Category withTrashed(bool $withTrashed = true)
+ * @method static Builder<static>|Category withoutTrashed()
+ * @mixin \Eloquent
+ */
 class Category extends Model
 {
     use HasTranslations, SoftDeletes;
@@ -81,6 +131,12 @@ class Category extends Model
         return array_reverse($breadcrumb);
     }
 
+    /**
+     * Scope a query to only include active products.
+     * * @param \Illuminate\Database\Eloquent\Builder<static> $query
+     * @return \Illuminate\Database\Eloquent\Builder<static>
+     */
+    
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);

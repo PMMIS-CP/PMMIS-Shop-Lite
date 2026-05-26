@@ -7,6 +7,43 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Storage;
 
 
+/**
+ * @property int $id
+ * @property int $product_id
+ * @property string $path
+ * @property string|null $thumbnail_small
+ * @property string|null $thumbnail_medium
+ * @property string|null $thumbnail_large
+ * @property bool $is_featured
+ * @property int $sort_order
+ * @property string|null $alt_text
+ * @property string|null $mime_type
+ * @property int|null $file_size
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read string|null $large_thumbnail_url
+ * @property-read string|null $medium_thumbnail_url
+ * @property-read string|null $small_thumbnail_url
+ * @property-read string $url
+ * @property-read \App\Models\Product|null $product
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ProductImage newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ProductImage newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ProductImage query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ProductImage whereAltText($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ProductImage whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ProductImage whereFileSize($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ProductImage whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ProductImage whereIsFeatured($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ProductImage whereMimeType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ProductImage wherePath($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ProductImage whereProductId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ProductImage whereSortOrder($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ProductImage whereThumbnailLarge($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ProductImage whereThumbnailMedium($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ProductImage whereThumbnailSmall($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ProductImage whereUpdatedAt($value)
+ * @mixin \Eloquent
+ */
 class ProductImage extends Model
 {
     protected $table = 'product_images';

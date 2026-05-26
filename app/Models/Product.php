@@ -10,6 +10,85 @@ use Spatie\Translatable\HasTranslations;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Session;
 
+/**
+ * @property int $id
+ * @property int $category_id
+ * @property string $sku
+ * @property float $price_usd
+ * @property int $stock
+ * @property float|null $weight
+ * @property array<array-key, mixed> $name
+ * @property array<array-key, mixed> $slug
+ * @property array<array-key, mixed>|null $short_description
+ * @property array<array-key, mixed>|null $description
+ * @property array<array-key, mixed>|null $meta_title
+ * @property array<array-key, mixed>|null $meta_description
+ * @property string|null $slug_fa
+ * @property string|null $slug_en
+ * @property bool $is_active
+ * @property bool $is_featured
+ * @property int $sort_order
+ * @property string|null $focus_keyword
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property \Illuminate\Support\Carbon|null $deleted_at
+ * @property-read \App\Models\Category|null $category
+ * @property-read \App\Models\ProductImage|null $featuredImage
+ * @property-read string $formatted_price
+ * @property-read bool $is_in_stock
+ * @property-read string|null $localized_description
+ * @property-read string $localized_name
+ * @property-read string|null $localized_short_description
+ * @property-read float $price_irr
+ * @property-read string $stock_status
+ * @property-read string $stock_status_badge
+ * @property-read array $translatable_columns_from
+ * @property-read string $url
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ProductImage> $images
+ * @property-read int|null $images_count
+ * @property-read mixed $translations
+ * @method static Builder<static>|Product active()
+ * @method static Builder<static>|Product byCategory(int $categoryId)
+ * @method static Builder<static>|Product featured()
+ * @method static Builder<static>|Product inStock()
+ * @method static Builder<static>|Product lowStock(int $threshold = 10)
+ * @method static Builder<static>|Product newModelQuery()
+ * @method static Builder<static>|Product newQuery()
+ * @method static Builder<static>|Product onlyTrashed()
+ * @method static Builder<static>|Product orderByPrice(string $direction = 'asc')
+ * @method static Builder<static>|Product outOfStock()
+ * @method static Builder<static>|Product priceRange(float $min, float $max)
+ * @method static Builder<static>|Product query()
+ * @method static Builder<static>|Product search(?string $searchTerm)
+ * @method static Builder<static>|Product whereCategoryId($value)
+ * @method static Builder<static>|Product whereCreatedAt($value)
+ * @method static Builder<static>|Product whereDeletedAt($value)
+ * @method static Builder<static>|Product whereDescription($value)
+ * @method static Builder<static>|Product whereFocusKeyword($value)
+ * @method static Builder<static>|Product whereId($value)
+ * @method static Builder<static>|Product whereIsActive($value)
+ * @method static Builder<static>|Product whereIsFeatured($value)
+ * @method static Builder<static>|Product whereJsonContainsLocale(string $column, string $locale, ?mixed $value, string $operand = '=')
+ * @method static Builder<static>|Product whereJsonContainsLocales(string $column, array $locales, ?mixed $value, string $operand = '=')
+ * @method static Builder<static>|Product whereLocale(string $column, string $locale)
+ * @method static Builder<static>|Product whereLocales(string $column, array $locales)
+ * @method static Builder<static>|Product whereMetaDescription($value)
+ * @method static Builder<static>|Product whereMetaTitle($value)
+ * @method static Builder<static>|Product whereName($value)
+ * @method static Builder<static>|Product wherePriceUsd($value)
+ * @method static Builder<static>|Product whereShortDescription($value)
+ * @method static Builder<static>|Product whereSku($value)
+ * @method static Builder<static>|Product whereSlug($value)
+ * @method static Builder<static>|Product whereSlugEn($value)
+ * @method static Builder<static>|Product whereSlugFa($value)
+ * @method static Builder<static>|Product whereSortOrder($value)
+ * @method static Builder<static>|Product whereStock($value)
+ * @method static Builder<static>|Product whereUpdatedAt($value)
+ * @method static Builder<static>|Product whereWeight($value)
+ * @method static Builder<static>|Product withTrashed(bool $withTrashed = true)
+ * @method static Builder<static>|Product withoutTrashed()
+ * @mixin \Eloquent
+ */
 class Product extends Model
 {
     use HasTranslations, SoftDeletes;
@@ -281,7 +360,10 @@ class Product extends Model
 
     /**
      * Scope a query to only include active products.
+     * * @param \Illuminate\Database\Eloquent\Builder<static> $query
+     * @return \Illuminate\Database\Eloquent\Builder<static>
      */
+    
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);
