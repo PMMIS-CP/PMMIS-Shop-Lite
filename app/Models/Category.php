@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Translatable\HasTranslations;
 use Illuminate\Database\Eloquent\Relations\{BelongsTo, HasMany};
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 /**
  * @property int $id
@@ -61,7 +62,8 @@ use Illuminate\Database\Eloquent\Builder;
 class Category extends Model
 {
     use HasTranslations, SoftDeletes;
-
+    use HasFactory;
+    
     protected $fillable = ['name', 'slug', 'parent_id', 'is_active', 'sort_order'];
     
     public array $translatable = ['name', 'slug'];
@@ -136,7 +138,7 @@ class Category extends Model
      * * @param \Illuminate\Database\Eloquent\Builder<static> $query
      * @return \Illuminate\Database\Eloquent\Builder<static>
      */
-    
+
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);
