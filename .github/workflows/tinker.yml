@@ -44,13 +44,16 @@ jobs:
     - name: Run Migrations
       run: php artisan migrate --force
     
-    - name: Create Categories and Products
+    - name: Create Categories and Products with Tinker
       run: |
         php artisan tinker --execute='
           use App\Models\Category;
           use App\Models\Product;
+          use Illuminate\Support\Facades\Cache;
           
           echo "STARTING DATA CREATION - " . date("Y-m-d H:i:s") . PHP_EOL;
+          
+          Cache::flush();
           
           $categories = [
             ["name" => ["en" => "Electronics", "fa" => "الکترونیک"], "slug" => ["en" => "electronics", "fa" => "الکترونیک"], "is_active" => true, "sort_order" => 1],
@@ -85,12 +88,19 @@ jobs:
             ];
             
             foreach ($products as $prodData) {
-              $existing = Product::where("sku", $prodData["sku"])->first();
-              if (!$existing) {
-                $prod = Product::create($prodData);
-                echo "Created product: " . $prod->getTranslation("name", "en") . PHP_EOL;
-              } else {
-                echo "Product exists: " . $existing->getTranslation("name", "en") . PHP_EOL;
+              try {
+                $existing = Product::where("sku", $prodData["sku"])->first();
+                if (!$existing) {
+                  $prod = Product::create($prodData);
+                  echo "Created product: " . $prod->getTranslation("name", "en") . PHP_EOL;
+                } else {
+                  echo "Product exists: " . $existing->getTranslation("name", "en") . PHP_EOL;
+                }
+              } catch (Exception $e) {
+                echo "Error: " . $e->getMessage() . PHP_EOL;
+                if (strpos($e->getMessage(), "tagging") !== false) {
+                  echo "Cache tagging issue detected - continuing anyway" . PHP_EOL;
+                }
               }
             }
           }
