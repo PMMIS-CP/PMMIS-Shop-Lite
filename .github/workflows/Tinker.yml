@@ -1,4 +1,4 @@
-name: Laravel CI/CD Pipeline
+name: Laravel Tinker
 
 on:
   push:
