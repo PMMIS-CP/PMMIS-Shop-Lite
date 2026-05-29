@@ -26,7 +26,12 @@ jobs:
         php-version: '8.3'
         extensions: bcmath, ctype, fileinfo, json, mbstring, pdo, pdo_mysql, tokenizer, xml, curl
     
-    - name: Install Dependencies
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+    
+    - name: Install Composer Dependencies
       run: composer install --no-interaction
     
     - name: Install Tinker
@@ -49,7 +54,11 @@ jobs:
           
           echo "STARTING DATA CREATION - " . date("Y-m-d H:i:s") . PHP_EOL;
           
-          Cache::flush();
+          try {
+            Cache::flush();
+          } catch (Exception $e) {
+            echo "Cache flush skipped: " . $e->getMessage() . PHP_EOL;
+          }
           
           $categories = [
             ["name" => ["en" => "Electronics", "fa" => "الکترونیک"], "slug" => ["en" => "electronics", "fa" => "الکترونیک"], "is_active" => true, "sort_order" => 1],
@@ -88,12 +97,12 @@ jobs:
                 $existing = Product::where("sku", $prodData["sku"])->first();
                 if (!$existing) {
                   $prod = Product::create($prodData);
-                  echo "Created product: " . $prod->getTranslation("name", "en") . PHP_EOL;
+                  echo "Created product: " . $prod->getTranslation("name", "en") . " (SKU: " . $prod->sku . ")" . PHP_EOL;
                 } else {
                   echo "Product exists: " . $existing->getTranslation("name", "en") . PHP_EOL;
                 }
               } catch (Exception $e) {
-                echo "Error: " . $e->getMessage() . PHP_EOL;
+                echo "Error creating product: " . $e->getMessage() . PHP_EOL;
               }
             }
           }
@@ -103,34 +112,34 @@ jobs:
           echo "DATA CREATION COMPLETED" . PHP_EOL;
         '
     
-    - name: Start Server with Debug
+    - name: Build Vite Assets
+      run: |
+        if [ -f package.json ]; then
+          npm ci
+          npm run build
+        else
+          echo "No package.json found, creating dummy manifest"
+          mkdir -p public/build
+          echo '{}' > public/build/manifest.json
+        fi
+    
+    - name: Start Laravel Server
       run: |
         echo "Starting Laravel Server..."
-        echo "PHP Version: $(php -v)"
-        echo "Current directory: $(pwd)"
-        echo "Checking if .env exists:"
-        ls -la .env
-        echo "Checking routes:"
-        php artisan route:list | head -20
-        
         php artisan serve --host=127.0.0.1 --port=8000 > server.log 2>&1 &
-        SERVER_PID=$!
-        echo "SERVER_PID=$SERVER_PID" >> $GITHUB_ENV
-        echo "Server started with PID: $SERVER_PID"
-        
-        sleep 3
-        echo "Checking if server is running:"
-        ps aux | grep "php artisan serve" || echo "Process not found"
-        
-        echo "Testing connection to server:"
-        curl -v http://127.0.0.1:8000 2>&1 || echo "Curl failed"
-        
-        echo "Server log content:"
-        cat server.log || echo "No log file"
-        
-        sleep 5
+        sleep 10
+        for i in 1 2 3 4 5; do
+          if curl -s http://127.0.0.1:8000 > /dev/null 2>&1; then
+            echo "Server ready"
+            exit 0
+          fi
+          echo "Waiting for server... ($i/5)"
+          sleep 3
+        done
+        echo "Server not ready after 25 seconds"
+        exit 1
     
-    - name: Browser Tests with Debug
+    - name: Browser Tests
       run: |
         php artisan tinker --execute='
           use App\Models\Category;
@@ -140,106 +149,96 @@ jobs:
           $logDir = ".github/Logs";
           if (!is_dir($logDir)) mkdir($logDir, 0777, true);
           
-          echo "========== SERVER CONNECTION TEST ==========" . PHP_EOL;
+          $baseUrl = "http://127.0.0.1:8000";
           
-          $testUrl = "http://127.0.0.1:8000";
-          echo "Testing connection to: " . $testUrl . PHP_EOL;
-          
+          echo "Testing base connection..." . PHP_EOL;
           $ch = curl_init();
-          curl_setopt($ch, CURLOPT_URL, $testUrl);
+          curl_setopt($ch, CURLOPT_URL, $baseUrl);
           curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
           curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-          curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
-          curl_setopt($ch, CURLOPT_VERBOSE, true);
-          $verbose = fopen("php://temp", "w+");
-          curl_setopt($ch, CURLOPT_STDERR, $verbose);
           $response = curl_exec($ch);
           $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-          $error = curl_error($ch);
-          rewind($verbose);
-          $verboseLog = stream_get_contents($verbose);
           curl_close($ch);
-          
-          echo "HTTP Status: " . $code . PHP_EOL;
-          if ($error) {
-            echo "CURL Error: " . $error . PHP_EOL;
-          }
-          echo "Verbose Log: " . PHP_EOL . $verboseLog . PHP_EOL;
-          
-          if ($code === 0) {
-            echo "ERROR: Server is not responding on port 8000" . PHP_EOL;
-            echo "Possible issues:" . PHP_EOL;
-            echo "1. PHP artisan serve failed to start" . PHP_EOL;
-            echo "2. Port 8000 is blocked" . PHP_EOL;
-            echo "3. Server needs more time to start" . PHP_EOL;
-          }
-          
-          echo PHP_EOL . "========== TESTING CATEGORIES ==========" . PHP_EOL;
+          echo "Base URL HTTP Status: " . $code . PHP_EOL;
           
           $allHtml = "<html><head><meta charset=\"UTF-8\"><title>Test Results</title></head><body>";
           $allHtml .= "<h1>Test Results - " . date("Y-m-d H:i:s") . "</h1>";
-          $allHtml .= "<p>Server Connection Test: HTTP " . $code . "</p>";
-          if ($error) {
-            $allHtml .= "<p class=\"error\">CURL Error: " . $error . "</p>";
-          }
+          $allHtml .= "<p>Base URL Status: HTTP " . $code . "</p>";
+          
+          $testResults = [];
           
           foreach (Category::active()->get() as $cat) {
-            $url = "http://127.0.0.1:8000" . $cat->url;
-            echo "Testing category: " . $cat->getTranslation("name", "en") . " - URL: " . $url . PHP_EOL;
+            $slug = $cat->slug_en;
+            $url = $baseUrl . "/category/" . $slug;
+            echo "Testing category: " . $cat->getTranslation("name", "en") . " - " . $url . PHP_EOL;
             
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, $url);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
             $response = curl_exec($ch);
-            $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            $error = curl_error($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
             curl_close($ch);
+            
+            $testResults[] = ["type" => "category", "name" => $cat->getTranslation("name", "en"), "status" => $httpCode];
             
             $html = "<h2>" . $cat->getTranslation("name", "en") . "</h2>";
             $html .= "<p>URL: " . $url . "</p>";
-            $html .= "<p>HTTP: " . $code . "</p>";
-            if ($error) {
-              $html .= "<p>CURL Error: " . $error . "</p>";
+            $html .= "<p>HTTP: " . $httpCode . "</p>";
+            if ($httpCode == 200) {
+              $html .= "<pre>" . htmlspecialchars(substr($response, 0, 1500)) . "</pre>";
+            } else {
+              $html .= "<p class=\"error\">Error loading page - HTTP " . $httpCode . "</p>";
             }
-            $html .= "<pre>" . htmlspecialchars(substr($response, 0, 2000)) . "</pre>";
             file_put_contents($logDir . "/category_" . $cat->id . "_" . $timestamp . ".html", $html);
             $allHtml .= $html;
           }
           
-          echo PHP_EOL . "========== TESTING PRODUCTS ==========" . PHP_EOL;
-          
           foreach (Product::active()->take(5)->get() as $prod) {
-            $url = "http://127.0.0.1:8000" . $prod->url;
-            echo "Testing product: " . $prod->localized_name . " - URL: " . $url . PHP_EOL;
+            $slug = $prod->getTranslation("slug", "en");
+            $url = $baseUrl . "/product/" . $slug;
+            echo "Testing product: " . $prod->localized_name . " - " . $url . PHP_EOL;
             
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, $url);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
             $response = curl_exec($ch);
-            $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            $error = curl_error($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
             curl_close($ch);
+            
+            $testResults[] = ["type" => "product", "name" => $prod->localized_name, "status" => $httpCode];
             
             $html = "<h2>" . $prod->localized_name . "</h2>";
             $html .= "<p>URL: " . $url . "</p>";
-            $html .= "<p>HTTP: " . $code . "</p>";
+            $html .= "<p>HTTP: " . $httpCode . "</p>";
             $html .= "<p>SKU: " . $prod->sku . "</p>";
             $html .= "<p>Price: " . $prod->formatted_price . "</p>";
-            if ($error) {
-              $html .= "<p>CURL Error: " . $error . "</p>";
+            if ($httpCode == 200) {
+              $html .= "<pre>" . htmlspecialchars(substr($response, 0, 1500)) . "</pre>";
+            } else {
+              $html .= "<p class=\"error\">Error loading page - HTTP " . $httpCode . "</p>";
             }
-            $html .= "<pre>" . htmlspecialchars(substr($response, 0, 2000)) . "</pre>";
             file_put_contents($logDir . "/product_" . $prod->id . "_" . $timestamp . ".html", $html);
             $allHtml .= $html;
           }
           
-          $allHtml .= "</body></html>";
+          $allHtml .= "<hr><h2>Summary</h2><ul>";
+          foreach ($testResults as $tr) {
+            $statusIcon = $tr["status"] == 200 ? "✅" : "❌";
+            $allHtml .= "<li>$statusIcon " . $tr["type"] . ": " . $tr["name"] . " - HTTP " . $tr["status"] . "</li>";
+          }
+          $allHtml .= "</ul></body></html>";
           file_put_contents($logDir . "/complete_" . $timestamp . ".html", $allHtml);
-          echo PHP_EOL . "BROWSER TESTS COMPLETED" . PHP_EOL;
+          
+          $failed = array_filter($testResults, function($tr) { return $tr["status"] != 200; });
+          if (count($failed) > 0) {
+            echo "FAILED: " . count($failed) . " tests failed" . PHP_EOL;
+            exit(1);
+          }
+          echo "ALL TESTS PASSED" . PHP_EOL;
         '
     
     - name: Show Server Log
@@ -248,20 +247,14 @@ jobs:
         echo "========== SERVER LOG =========="
         cat server.log || echo "No server.log file"
         echo ""
-        echo "========== CHECKING PHP PROCESS =========="
-        ps aux | grep php
-        echo ""
         echo "========== CHECKING PORT 8000 =========="
         netstat -tlnp 2>/dev/null | grep 8000 || echo "Port 8000 not listening"
-        echo ""
-        echo "========== TESTING WITH CURL DIRECTLY =========="
-        curl -v http://127.0.0.1:8000 2>&1 | head -30 || echo "Curl connection failed"
     
     - name: Upload All Files
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: test-outputs-with-debug
+        name: test-outputs
         path: |
           .github/Logs/*.html
           server.log
