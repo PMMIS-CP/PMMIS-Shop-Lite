@@ -1,7 +1,9 @@
 name: Laravel Tinker
 
+#push
+
 on:
-  push:
+  push: 
     branches: [ main ]
   pull_request:
     branches: [ main ]
