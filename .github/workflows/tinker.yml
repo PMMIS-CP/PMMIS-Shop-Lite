@@ -1,15 +1,14 @@
 name: Laravel Tinker
 
-on: workflow_dispatch
-
-# on:
-#   push: 
-#     branches: [ main ]
-#   pull_request:
-#     branches: [ main ]
+on:
+  workflow_dispatch
+  # push:
+  #   branches: [ main ]
+  # pull_request:
+  #   branches: [ main ]
 
 jobs:
-  test-with-tinker-and-browser:
+  test:
     runs-on: ubuntu-latest
     
     services:
@@ -30,471 +29,143 @@ jobs:
       with:
         php-version: '8.3'
         extensions: bcmath, ctype, fileinfo, json, mbstring, pdo, pdo_mysql, tokenizer, xml, curl
-        coverage: none
     
-    - name: Install Composer Dependencies
-      run: composer install --prefer-dist --no-interaction --no-progress
+    - name: Install Dependencies
+      run: composer install --no-interaction
     
     - name: Install Tinker
       run: composer require --dev laravel/tinker
     
-    - name: Create Environment File
+    - name: Setup Environment
       run: |
         cp .env.example .env
         php artisan key:generate
     
-    - name: Run Migrations and Seeders
-      run: |
-        php artisan migrate --force
-        php artisan db:seed --force
+    - name: Run Migrations
+      run: php artisan migrate --force
     
-    - name: Create Categories and Products with Tinker
+    - name: Create Categories and Products
       run: |
-        php artisan tinker --execute="
+        php artisan tinker --execute='
           use App\Models\Category;
           use App\Models\Product;
           
-          echo 'STARTING DATA CREATION - ' . date('Y-m-d H:i:s') . PHP_EOL;
-          echo str_repeat('=', 60) . PHP_EOL;
-          
-          echo PHP_EOL . 'CREATING CATEGORIES' . PHP_EOL;
-          echo str_repeat('-', 40) . PHP_EOL;
+          echo "STARTING DATA CREATION - " . date("Y-m-d H:i:s") . PHP_EOL;
           
           $categories = [
-            [
-              'name' => ['en' => 'Electronics', 'fa' => 'الکترونیک'],
-              'slug' => ['en' => 'electronics', 'fa' => 'الکترونیک'],
-              'is_active' => true,
-              'sort_order' => 1
-            ],
-            [
-              'name' => ['en' => 'Clothing', 'fa' => 'پوشاک'],
-              'slug' => ['en' => 'clothing', 'fa' => 'پوشاک'],
-              'is_active' => true,
-              'sort_order' => 2
-            ],
-            [
-              'name' => ['en' => 'Books', 'fa' => 'کتاب‌ها'],
-              'slug' => ['en' => 'books', 'fa' => 'کتاب‌ها'],
-              'is_active' => true,
-              'sort_order' => 3
-            ],
-            [
-              'name' => ['en' => 'Sports', 'fa' => 'ورزشی'],
-              'slug' => ['en' => 'sports', 'fa' => 'ورزشی'],
-              'is_active' => true,
-              'sort_order' => 4
-            ],
-            [
-              'name' => ['en' => 'Home & Garden', 'fa' => 'خانه و باغ'],
-              'slug' => ['en' => 'home-garden', 'fa' => 'خانه-و-باغ'],
-              'is_active' => true,
-              'sort_order' => 5
-            ]
+            ["name" => ["en" => "Electronics", "fa" => "الکترونیک"], "slug" => ["en" => "electronics", "fa" => "الکترونیک"], "is_active" => true, "sort_order" => 1],
+            ["name" => ["en" => "Clothing", "fa" => "پوشاک"], "slug" => ["en" => "clothing", "fa" => "پوشاک"], "is_active" => true, "sort_order" => 2],
+            ["name" => ["en" => "Books", "fa" => "کتابها"], "slug" => ["en" => "books", "fa" => "کتابها"], "is_active" => true, "sort_order" => 3],
+            ["name" => ["en" => "Sports", "fa" => "ورزشی"], "slug" => ["en" => "sports", "fa" => "ورزشی"], "is_active" => true, "sort_order" => 4],
+            ["name" => ["en" => "Home & Garden", "fa" => "خانه و باغ"], "slug" => ["en" => "home-garden", "fa" => "خانه-و-باغ"], "is_active" => true, "sort_order" => 5]
           ];
           
           $createdCategories = [];
-          foreach (\$categories as \$catData) {
-            try {
-              \$existingCategory = Category::where('slug->en', \$catData['slug']['en'])->first();
-              if (!\$existingCategory) {
-                \$category = Category::create(\$catData);
-                \$createdCategories[] = \$category;
-                echo 'Created category: ' . \$category->getTranslation('name', 'en') . ' (ID: ' . \$category->id . ')' . PHP_EOL;
-              } else {
-                \$createdCategories[] = \$existingCategory;
-                echo 'Category already exists: ' . \$existingCategory->getTranslation('name', 'en') . ' (ID: ' . \$existingCategory->id . ')' . PHP_EOL;
-              }
-            } catch (Exception \$e) {
-              echo 'Error creating category ' . \$catData['name']['en'] . ': ' . \$e->getMessage() . PHP_EOL;
+          foreach ($categories as $catData) {
+            $existing = Category::where("slug->en", $catData["slug"]["en"])->first();
+            if (!$existing) {
+              $cat = Category::create($catData);
+              $createdCategories[] = $cat;
+              echo "Created category: " . $cat->getTranslation("name", "en") . PHP_EOL;
+            } else {
+              $createdCategories[] = $existing;
+              echo "Category exists: " . $existing->getTranslation("name", "en") . PHP_EOL;
             }
           }
           
-          echo PHP_EOL . 'CREATING DEFAULT PRODUCTS' . PHP_EOL;
-          echo str_repeat('-', 40) . PHP_EOL;
-          
-          if (count(\$createdCategories) > 0) {
-            \$products = [
-              [
-                'category_id' => \$createdCategories[0]->id,
-                'sku' => 'ELEC-001',
-                'name' => ['en' => 'Smartphone X', 'fa' => 'اسمارت فون ایکس'],
-                'slug' => ['en' => 'smartphone-x', 'fa' => 'اسمارت-فون-ایکس'],
-                'price_usd' => 599.99,
-                'stock' => 50,
-                'is_active' => true,
-                'is_featured' => true,
-                'sort_order' => 1,
-                'short_description' => ['en' => 'Latest smartphone with advanced features', 'fa' => 'جدیدترین گوشی هوشمند با ویژگی‌های پیشرفته'],
-                'description' => ['en' => 'This is a high-end smartphone with amazing features.', 'fa' => 'این یک گوشی هوشمند پیشرفته با ویژگی‌های شگفت‌انگیز است.']
-              ],
-              [
-                'category_id' => \$createdCategories[0]->id,
-                'sku' => 'ELEC-002',
-                'name' => ['en' => 'Laptop Pro', 'fa' => 'لپ تاپ پرو'],
-                'slug' => ['en' => 'laptop-pro', 'fa' => 'لپ-تاپ-پرو'],
-                'price_usd' => 1299.99,
-                'stock' => 30,
-                'is_active' => true,
-                'is_featured' => true,
-                'sort_order' => 2,
-                'short_description' => ['en' => 'Powerful laptop for professionals', 'fa' => 'لپ تاپ قدرتمند برای حرفه‌ای‌ها'],
-                'description' => ['en' => 'High performance laptop with latest processor.', 'fa' => 'لپ تاپ با کارایی بالا با جدیدترین پردازنده.']
-              ],
-              [
-                'category_id' => \$createdCategories[1]->id,
-                'sku' => 'CLOTH-001',
-                'name' => ['en' => 'T-Shirt Classic', 'fa' => 'تی شرت کلاسیک'],
-                'slug' => ['en' => 't-shirt-classic', 'fa' => 'تی-شرت-کلاسیک'],
-                'price_usd' => 19.99,
-                'stock' => 100,
-                'is_active' => true,
-                'is_featured' => false,
-                'sort_order' => 1,
-                'short_description' => ['en' => 'Comfortable cotton t-shirt', 'fa' => 'تی شرت پنبه‌ای راحت'],
-                'description' => ['en' => '100% cotton, available in multiple sizes.', 'fa' => '۱۰۰٪ پنبه، موجود در سایزهای مختلف.']
-              ],
-              [
-                'category_id' => \$createdCategories[1]->id,
-                'sku' => 'CLOTH-002',
-                'name' => ['en' => 'Jeans Blue', 'fa' => 'شلوار جین آبی'],
-                'slug' => ['en' => 'jeans-blue', 'fa' => 'شلوار-جین-آبی'],
-                'price_usd' => 49.99,
-                'stock' => 75,
-                'is_active' => true,
-                'is_featured' => false,
-                'sort_order' => 2,
-                'short_description' => ['en' => 'Stylish blue jeans', 'fa' => 'شلوار جین آبی شیک'],
-                'description' => ['en' => 'High quality denim, perfect fit.', 'fa' => 'جین با کیفیت بالا، سایز عالی.']
-              ],
-              [
-                'category_id' => \$createdCategories[2]->id,
-                'sku' => 'BOOK-001',
-                'name' => ['en' => 'Programming Guide', 'fa' => 'راهنمای برنامه نویسی'],
-                'slug' => ['en' => 'programming-guide', 'fa' => 'راهنمای-برنامه-نویسی'],
-                'price_usd' => 39.99,
-                'stock' => 40,
-                'is_active' => true,
-                'is_featured' => true,
-                'sort_order' => 1,
-                'short_description' => ['en' => 'Learn programming from scratch', 'fa' => 'برنامه نویسی را از صفر یاد بگیرید'],
-                'description' => ['en' => 'Comprehensive guide for beginners.', 'fa' => 'راهنمای جامع برای مبتدیان.']
-              ],
-              [
-                'category_id' => \$createdCategories[3]->id,
-                'sku' => 'SPORT-001',
-                'name' => ['en' => 'Football', 'fa' => 'توپ فوتبال'],
-                'slug' => ['en' => 'football', 'fa' => 'توپ-فوتبال'],
-                'price_usd' => 29.99,
-                'stock' => 60,
-                'is_active' => true,
-                'is_featured' => false,
-                'sort_order' => 1,
-                'short_description' => ['en' => 'Official size football', 'fa' => 'توپ فوتبال سایز استاندارد'],
-                'description' => ['en' => 'Durable and high quality.', 'fa' => 'مقاوم و با کیفیت بالا.']
-              ],
-              [
-                'category_id' => \$createdCategories[4]->id,
-                'sku' => 'HOME-001',
-                'name' => ['en' => 'Garden Tools Set', 'fa' => 'ست ابزار باغبانی'],
-                'slug' => ['en' => 'garden-tools-set', 'fa' => 'ست-ابزار-باغبانی'],
-                'price_usd' => 89.99,
-                'stock' => 25,
-                'is_active' => true,
-                'is_featured' => false,
-                'sort_order' => 1,
-                'short_description' => ['en' => 'Complete garden tools kit', 'fa' => 'ست کامل ابزار باغبانی'],
-                'description' => ['en' => 'Everything you need for gardening.', 'fa' => 'همه چیز برای باغبانی.']
-              ]
+          if (count($createdCategories) > 0) {
+            $products = [
+              ["category_id" => $createdCategories[0]->id, "sku" => "ELEC-001", "name" => ["en" => "Smartphone X", "fa" => "اسمارت فون ایکس"], "slug" => ["en" => "smartphone-x", "fa" => "اسمارت-فون-ایکس"], "price_usd" => 599.99, "stock" => 50, "is_active" => true, "is_featured" => true, "sort_order" => 1],
+              ["category_id" => $createdCategories[0]->id, "sku" => "ELEC-002", "name" => ["en" => "Laptop Pro", "fa" => "لپ تاپ پرو"], "slug" => ["en" => "laptop-pro", "fa" => "لپ-تاپ-پرو"], "price_usd" => 1299.99, "stock" => 30, "is_active" => true, "is_featured" => true, "sort_order" => 2],
+              ["category_id" => $createdCategories[1]->id, "sku" => "CLOTH-001", "name" => ["en" => "T-Shirt Classic", "fa" => "تی شرت کلاسیک"], "slug" => ["en" => "t-shirt-classic", "fa" => "تی-شرت-کلاسیک"], "price_usd" => 19.99, "stock" => 100, "is_active" => true, "is_featured" => false, "sort_order" => 1],
+              ["category_id" => $createdCategories[1]->id, "sku" => "CLOTH-002", "name" => ["en" => "Jeans Blue", "fa" => "شلوار جین آبی"], "slug" => ["en" => "jeans-blue", "fa" => "شلوار-جین-آبی"], "price_usd" => 49.99, "stock" => 75, "is_active" => true, "is_featured" => false, "sort_order" => 2],
+              ["category_id" => $createdCategories[2]->id, "sku" => "BOOK-001", "name" => ["en" => "Programming Guide", "fa" => "راهنمای برنامه نویسی"], "slug" => ["en" => "programming-guide", "fa" => "راهنمای-برنامه-نویسی"], "price_usd" => 39.99, "stock" => 40, "is_active" => true, "is_featured" => true, "sort_order" => 1],
+              ["category_id" => $createdCategories[3]->id, "sku" => "SPORT-001", "name" => ["en" => "Football", "fa" => "توپ فوتبال"], "slug" => ["en" => "football", "fa" => "توپ-فوتبال"], "price_usd" => 29.99, "stock" => 60, "is_active" => true, "is_featured" => false, "sort_order" => 1],
+              ["category_id" => $createdCategories[4]->id, "sku" => "HOME-001", "name" => ["en" => "Garden Tools Set", "fa" => "ست ابزار باغبانی"], "slug" => ["en" => "garden-tools-set", "fa" => "ست-ابزار-باغبانی"], "price_usd" => 89.99, "stock" => 25, "is_active" => true, "is_featured" => false, "sort_order" => 1]
             ];
             
-            foreach (\$products as \$prodData) {
-              try {
-                \$existingProduct = Product::where('sku', \$prodData['sku'])->first();
-                if (!\$existingProduct) {
-                  \$product = Product::create(\$prodData);
-                  echo 'Created product: ' . \$product->getTranslation('name', 'en') . ' (SKU: ' . \$product->sku . ')' . PHP_EOL;
-                } else {
-                  echo 'Product already exists: ' . \$existingProduct->getTranslation('name', 'en') . ' (SKU: ' . \$existingProduct->sku . ')' . PHP_EOL;
-                }
-              } catch (Exception \$e) {
-                echo 'Error creating product ' . \$prodData['sku'] . ': ' . \$e->getMessage() . PHP_EOL;
+            foreach ($products as $prodData) {
+              $existing = Product::where("sku", $prodData["sku"])->first();
+              if (!$existing) {
+                $prod = Product::create($prodData);
+                echo "Created product: " . $prod->getTranslation("name", "en") . PHP_EOL;
+              } else {
+                echo "Product exists: " . $existing->getTranslation("name", "en") . PHP_EOL;
               }
             }
           }
           
-          echo PHP_EOL . 'FINAL COUNT' . PHP_EOL;
-          echo str_repeat('-', 40) . PHP_EOL;
-          echo 'Total categories: ' . Category::count() . PHP_EOL;
-          echo 'Active categories: ' . Category::active()->count() . PHP_EOL;
-          echo 'Total products: ' . Product::count() . PHP_EOL;
-          echo 'Active products: ' . Product::active()->count() . PHP_EOL;
-          echo 'Products in stock: ' . Product::inStock()->count() . PHP_EOL;
-          
-          echo PHP_EOL . 'DATA CREATION COMPLETED' . PHP_EOL;
-        "
+          echo "Total categories: " . Category::count() . PHP_EOL;
+          echo "Total products: " . Product::count() . PHP_EOL;
+          echo "DATA CREATION COMPLETED" . PHP_EOL;
+        '
     
-    - name: Start Laravel Development Server
+    - name: Start Server
       run: |
         php artisan serve --host=0.0.0.0 --port=8000 &
         sleep 5
     
-    - name: Test Categories and Products with Browser Simulation
+    - name: Browser Tests
       run: |
-        php artisan tinker --execute="
+        php artisan tinker --execute='
           use App\Models\Category;
           use App\Models\Product;
           
-          $timestamp = date('Y-m-d_H-i-s');
-          $logDir = '.github/Logs';
+          $timestamp = date("Y-m-d_H-i-s");
+          $logDir = ".github/Logs";
+          if (!is_dir($logDir)) mkdir($logDir, 0777, true);
           
-          if (!is_dir(\$logDir)) {
-            mkdir(\$logDir, 0777, true);
+          echo "BROWSER TESTS STARTED" . PHP_EOL;
+          
+          $allHtml = "<html><head><meta charset=\"UTF-8\"><title>Test Results</title></head><body>";
+          
+          foreach (Category::active()->get() as $cat) {
+            echo "Testing category: " . $cat->getTranslation("name", "en") . PHP_EOL;
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, "http://localhost:8000" . $cat->url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+            $response = curl_exec($ch);
+            $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+            
+            $html = "<h2>" . $cat->getTranslation("name", "en") . "</h2>";
+            $html .= "<p>HTTP: " . $code . "</p>";
+            $html .= "<pre>" . htmlspecialchars(substr($response, 0, 1000)) . "</pre>";
+            file_put_contents($logDir . "/category_" . $cat->id . "_" . $timestamp . ".html", $html);
+            $allHtml .= $html;
           }
           
-          echo 'STARTING BROWSER SIMULATION TESTS - ' . date('Y-m-d H:i:s') . PHP_EOL;
-          echo str_repeat('=', 60) . PHP_EOL;
-          
-          echo PHP_EOL . 'TESTING CATEGORY PAGES' . PHP_EOL;
-          echo str_repeat('-', 40) . PHP_EOL;
-          
-          \$categories = Category::active()->take(5)->get();
-          \$allHtml = '';
-          
-          foreach (\$categories as \$category) {
-            echo PHP_EOL . 'Testing category: ' . \$category->getTranslation('name', 'en') . PHP_EOL;
-            echo 'URL: http://localhost:8000' . \$category->url . PHP_EOL;
+          foreach (Product::active()->take(5)->get() as $prod) {
+            echo "Testing product: " . $prod->localized_name . PHP_EOL;
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, "http://localhost:8000" . $prod->url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+            $response = curl_exec($ch);
+            $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
             
-            \$ch = curl_init();
-            curl_setopt(\$ch, CURLOPT_URL, 'http://localhost:8000' . \$category->url);
-            curl_setopt(\$ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt(\$ch, CURLOPT_TIMEOUT, 30);
-            curl_setopt(\$ch, CURLOPT_FOLLOWLOCATION, true);
-            curl_setopt(\$ch, CURLOPT_SSL_VERIFYPEER, false);
-            \$response = curl_exec(\$ch);
-            \$httpCode = curl_getinfo(\$ch, CURLINFO_HTTP_CODE);
-            curl_close(\$ch);
-            
-            if (\$httpCode === 200) {
-              echo 'HTTP Status: 200 OK' . PHP_EOL;
-              echo 'Response size: ' . strlen(\$response) . ' bytes' . PHP_EOL;
-              
-              \$htmlContent = '<!DOCTYPE html>' . PHP_EOL;
-              \$htmlContent .= '<html>' . PHP_EOL;
-              \$htmlContent .= '<head>' . PHP_EOL;
-              \$htmlContent .= '<meta charset=\"UTF-8\">' . PHP_EOL;
-              \$htmlContent .= '<title>Category Test - ' . \$category->getTranslation('name', 'en') . ' - ' . \$timestamp . '</title>' . PHP_EOL;
-              \$htmlContent .= '<style>' . PHP_EOL;
-              \$htmlContent .= 'body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }' . PHP_EOL;
-              \$htmlContent .= '.container { max-width: 1200px; margin: auto; background: white; padding: 20px; border-radius: 8px; }' . PHP_EOL;
-              \$htmlContent .= '.header { background: #333; color: white; padding: 10px; margin-bottom: 20px; }' . PHP_EOL;
-              \$htmlContent .= '.product { border: 1px solid #ddd; padding: 10px; margin: 10px; display: inline-block; width: 200px; }' . PHP_EOL;
-              \$htmlContent .= '.product h3 { color: #333; }' . PHP_EOL;
-              \$htmlContent .= '.price { color: green; font-weight: bold; }' . PHP_EOL;
-              \$htmlContent .= '.stock { color: #666; }' . PHP_EOL;
-              \$htmlContent .= '.error { color: red; background: #ffe6e6; padding: 10px; border-left: 4px solid red; }' . PHP_EOL;
-              \$htmlContent .= '</style>' . PHP_EOL;
-              \$htmlContent .= '</head>' . PHP_EOL;
-              \$htmlContent .= '<body>' . PHP_EOL;
-              \$htmlContent .= '<div class=\"container\">' . PHP_EOL;
-              \$htmlContent .= '<div class=\"header\">' . PHP_EOL;
-              \$htmlContent .= '<h1>Category Page Test</h1>' . PHP_EOL;
-              \$htmlContent .= '<p>Category: ' . \$category->getTranslation('name', 'en') . '</p>' . PHP_EOL;
-              \$htmlContent .= '<p>Test Date: ' . date('Y-m-d H:i:s') . '</p>' . PHP_EOL;
-              \$htmlContent .= '<p>URL: ' . \$category->url . '</p>' . PHP_EOL;
-              \$htmlContent .= '<p>HTTP Status: 200 OK</p>' . PHP_EOL;
-              \$htmlContent .= '</div>' . PHP_EOL;
-              \$htmlContent .= '<div class=\"content\">' . PHP_EOL;
-              \$htmlContent .= '<h2>Original Page Content</h2>' . PHP_EOL;
-              \$htmlContent .= '<div style=\"background: #f9f9f9; padding: 15px; border: 1px solid #ddd; max-height: 600px; overflow: auto;\">' . PHP_EOL;
-              \$htmlContent .= htmlspecialchars(\$response) . PHP_EOL;
-              \$htmlContent .= '</div>' . PHP_EOL;
-              \$htmlContent .= '</div>' . PHP_EOL;
-              \$htmlContent .= '</div>' . PHP_EOL;
-              \$htmlContent .= '</body>' . PHP_EOL;
-              \$htmlContent .= '</html>' . PHP_EOL;
-              
-              \$filename = \$logDir . '/category_' . preg_replace('/[^a-z0-9]+/i', '_', \$category->getTranslation('name', 'en')) . '_' . \$timestamp . '.html';
-              file_put_contents(\$filename, \$htmlContent);
-              echo 'HTML saved to: ' . \$filename . PHP_EOL;
-              
-              \$allHtml .= '<h2>Category: ' . \$category->getTranslation('name', 'en') . '</h2>' . PHP_EOL;
-              \$allHtml .= '<div style=\"margin: 20px 0; padding: 10px; background: #f0f0f0;\">' . PHP_EOL;
-              \$allHtml .= '<pre>' . htmlspecialchars(substr(\$response, 0, 2000)) . '...</pre>' . PHP_EOL;
-              \$allHtml .= '</div>' . PHP_EOL;
-            } else {
-              echo 'ERROR: HTTP Status ' . \$httpCode . PHP_EOL;
-              
-              \$errorHtml = '<!DOCTYPE html>' . PHP_EOL;
-              \$errorHtml .= '<html><head><meta charset=\"UTF-8\"><title>Error - Category</title></head><body>' . PHP_EOL;
-              \$errorHtml .= '<div class=\"error\">' . PHP_EOL;
-              \$errorHtml .= '<h2>Error Loading Category Page</h2>' . PHP_EOL;
-              \$errorHtml .= '<p>Category: ' . \$category->getTranslation('name', 'en') . '</p>' . PHP_EOL;
-              \$errorHtml .= '<p>URL: ' . \$category->url . '</p>' . PHP_EOL;
-              \$errorHtml .= '<p>HTTP Status: ' . \$httpCode . '</p>' . PHP_EOL;
-              \$errorHtml .= '</div></body></html>' . PHP_EOL;
-              
-              \$filename = \$logDir . '/category_error_' . preg_replace('/[^a-z0-9]+/i', '_', \$category->getTranslation('name', 'en')) . '_' . \$timestamp . '.html';
-              file_put_contents(\$filename, \$errorHtml);
-              echo 'Error HTML saved to: ' . \$filename . PHP_EOL;
-            }
+            $html = "<h2>" . $prod->localized_name . "</h2>";
+            $html .= "<p>HTTP: " . $code . "</p>";
+            $html .= "<p>SKU: " . $prod->sku . "</p>";
+            $html .= "<p>Price: " . $prod->formatted_price . "</p>";
+            $html .= "<pre>" . htmlspecialchars(substr($response, 0, 1000)) . "</pre>";
+            file_put_contents($logDir . "/product_" . $prod->id . "_" . $timestamp . ".html", $html);
+            $allHtml .= $html;
           }
           
-          echo PHP_EOL . 'TESTING PRODUCT PAGES' . PHP_EOL;
-          echo str_repeat('-', 40) . PHP_EOL;
-          
-          \$products = Product::active()->take(5)->get();
-          
-          foreach (\$products as \$product) {
-            echo PHP_EOL . 'Testing product: ' . \$product->localized_name . PHP_EOL;
-            echo 'URL: http://localhost:8000' . \$product->url . PHP_EOL;
-            
-            \$ch = curl_init();
-            curl_setopt(\$ch, CURLOPT_URL, 'http://localhost:8000' . \$product->url);
-            curl_setopt(\$ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt(\$ch, CURLOPT_TIMEOUT, 30);
-            curl_setopt(\$ch, CURLOPT_FOLLOWLOCATION, true);
-            curl_setopt(\$ch, CURLOPT_SSL_VERIFYPEER, false);
-            \$response = curl_exec(\$ch);
-            \$httpCode = curl_getinfo(\$ch, CURLINFO_HTTP_CODE);
-            curl_close(\$ch);
-            
-            if (\$httpCode === 200) {
-              echo 'HTTP Status: 200 OK' . PHP_EOL;
-              echo 'Response size: ' . strlen(\$response) . ' bytes' . PHP_EOL;
-              
-              \$htmlContent = '<!DOCTYPE html>' . PHP_EOL;
-              \$htmlContent .= '<html>' . PHP_EOL;
-              \$htmlContent .= '<head>' . PHP_EOL;
-              \$htmlContent .= '<meta charset=\"UTF-8\">' . PHP_EOL;
-              \$htmlContent .= '<title>Product Test - ' . \$product->localized_name . ' - ' . \$timestamp . '</title>' . PHP_EOL;
-              \$htmlContent .= '<style>' . PHP_EOL;
-              \$htmlContent .= 'body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }' . PHP_EOL;
-              \$htmlContent .= '.container { max-width: 1200px; margin: auto; background: white; padding: 20px; border-radius: 8px; }' . PHP_EOL;
-              \$htmlContent .= '.header { background: #333; color: white; padding: 10px; margin-bottom: 20px; }' . PHP_EOL;
-              \$htmlContent .= '.price { color: green; font-weight: bold; font-size: 24px; }' . PHP_EOL;
-              \$htmlContent .= '.stock { color: #666; margin: 10px 0; }' . PHP_EOL;
-              \$htmlContent .= '.sku { background: #eee; padding: 5px; font-family: monospace; }' . PHP_EOL;
-              \$htmlContent .= '.error { color: red; background: #ffe6e6; padding: 10px; border-left: 4px solid red; }' . PHP_EOL;
-              \$htmlContent .= '</style>' . PHP_EOL;
-              \$htmlContent .= '</head>' . PHP_EOL;
-              \$htmlContent .= '<body>' . PHP_EOL;
-              \$htmlContent .= '<div class=\"container\">' . PHP_EOL;
-              \$htmlContent .= '<div class=\"header\">' . PHP_EOL;
-              \$htmlContent .= '<h1>Product Page Test</h1>' . PHP_EOL;
-              \$htmlContent .= '<p>Product: ' . \$product->localized_name . '</p>' . PHP_EOL;
-              \$htmlContent .= '<p>Test Date: ' . date('Y-m-d H:i:s') . '</p>' . PHP_EOL;
-              \$htmlContent .= '<p>URL: ' . \$product->url . '</p>' . PHP_EOL;
-              \$htmlContent .= '<p>HTTP Status: 200 OK</p>' . PHP_EOL;
-              \$htmlContent .= '<p>SKU: ' . \$product->sku . '</p>' . PHP_EOL;
-              \$htmlContent .= '<p class=\"price\">Price: ' . \$product->formatted_price . '</p>' . PHP_EOL;
-              \$htmlContent .= '<p class=\"stock\">Stock: ' . \$product->stock . ' units</p>' . PHP_EOL;
-              \$htmlContent .= '</div>' . PHP_EOL;
-              \$htmlContent .= '<div class=\"content\">' . PHP_EOL;
-              \$htmlContent .= '<h2>Original Page Content</h2>' . PHP_EOL;
-              \$htmlContent .= '<div style=\"background: #f9f9f9; padding: 15px; border: 1px solid #ddd; max-height: 600px; overflow: auto;\">' . PHP_EOL;
-              \$htmlContent .= htmlspecialchars(\$response) . PHP_EOL;
-              \$htmlContent .= '</div>' . PHP_EOL;
-              \$htmlContent .= '</div>' . PHP_EOL;
-              \$htmlContent .= '</div>' . PHP_EOL;
-              \$htmlContent .= '</body>' . PHP_EOL;
-              \$htmlContent .= '</html>' . PHP_EOL;
-              
-              \$filename = \$logDir . '/product_' . preg_replace('/[^a-z0-9]+/i', '_', \$product->localized_name) . '_' . \$timestamp . '.html';
-              file_put_contents(\$filename, \$htmlContent);
-              echo 'HTML saved to: ' . \$filename . PHP_EOL;
-              
-              \$allHtml .= '<h2>Product: ' . \$product->localized_name . '</h2>' . PHP_EOL;
-              \$allHtml .= '<div style=\"margin: 20px 0; padding: 10px; background: #f0f0f0;\">' . PHP_EOL;
-              \$allHtml .= '<p><strong>SKU:</strong> ' . \$product->sku . '</p>' . PHP_EOL;
-              \$allHtml .= '<p><strong>Price:</strong> ' . \$product->formatted_price . '</p>' . PHP_EOL;
-              \$allHtml .= '<p><strong>Stock:</strong> ' . \$product->stock . '</p>' . PHP_EOL;
-              \$allHtml .= '<pre>' . htmlspecialchars(substr(\$response, 0, 2000)) . '...</pre>' . PHP_EOL;
-              \$allHtml .= '</div>' . PHP_EOL;
-            } else {
-              echo 'ERROR: HTTP Status ' . \$httpCode . PHP_EOL;
-              
-              \$errorHtml = '<!DOCTYPE html>' . PHP_EOL;
-              \$errorHtml .= '<html><head><meta charset=\"UTF-8\"><title>Error - Product</title></head><body>' . PHP_EOL;
-              \$errorHtml .= '<div class=\"error\">' . PHP_EOL;
-              \$errorHtml .= '<h2>Error Loading Product Page</h2>' . PHP_EOL;
-              \$errorHtml .= '<p>Product: ' . \$product->localized_name . '</p>' . PHP_EOL;
-              \$errorHtml .= '<p>URL: ' . \$product->url . '</p>' . PHP_EOL;
-              \$errorHtml .= '<p>HTTP Status: ' . \$httpCode . '</p>' . PHP_EOL;
-              \$errorHtml .= '</div></body></html>' . PHP_EOL;
-              
-              \$filename = \$logDir . '/product_error_' . preg_replace('/[^a-z0-9]+/i', '_', \$product->localized_name) . '_' . \$timestamp . '.html';
-              file_put_contents(\$filename, \$errorHtml);
-              echo 'Error HTML saved to: ' . \$filename . PHP_EOL;
-            }
-          }
-          
-          \$completeHtml = '<!DOCTYPE html>' . PHP_EOL;
-          \$completeHtml .= '<html>' . PHP_EOL;
-          \$completeHtml .= '<head>' . PHP_EOL;
-          \$completeHtml .= '<meta charset=\"UTF-8\">' . PHP_EOL;
-          \$completeHtml .= '<title>Complete Test Results - ' . \$timestamp . '</title>' . PHP_EOL;
-          \$completeHtml .= '<style>' . PHP_EOL;
-          \$completeHtml .= 'body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }' . PHP_EOL;
-          \$completeHtml .= '.container { max-width: 1400px; margin: auto; background: white; padding: 20px; border-radius: 8px; }' . PHP_EOL;
-          \$completeHtml .= '.header { background: #333; color: white; padding: 15px; margin-bottom: 20px; border-radius: 5px; }' . PHP_EOL;
-          \$completeHtml .= '.summary { background: #e8f4f8; padding: 15px; margin: 20px 0; border-left: 4px solid #2196F3; }' . PHP_EOL;
-          \$completeHtml .= 'h1 { color: #333; }' . PHP_EOL;
-          \$completeHtml .= 'h2 { color: #666; border-bottom: 2px solid #ddd; padding-bottom: 10px; }' . PHP_EOL;
-          \$completeHtml .= '</style>' . PHP_EOL;
-          \$completeHtml .= '</head>' . PHP_EOL;
-          \$completeHtml .= '<body>' . PHP_EOL;
-          \$completeHtml .= '<div class=\"container\">' . PHP_EOL;
-          \$completeHtml .= '<div class=\"header\">' . PHP_EOL;
-          \$completeHtml .= '<h1>Complete Test Results - Categories and Products</h1>' . PHP_EOL;
-          \$completeHtml .= '<p>Test Date: ' . date('Y-m-d H:i:s') . '</p>' . PHP_EOL;
-          \$completeHtml .= '<p>Total Categories: ' . Category::count() . '</p>' . PHP_EOL;
-          \$completeHtml .= '<p>Active Categories: ' . Category::active()->count() . '</p>' . PHP_EOL;
-          \$completeHtml .= '<p>Total Products: ' . Product::count() . '</p>' . PHP_EOL;
-          \$completeHtml .= '<p>Active Products: ' . Product::active()->count() . '</p>' . PHP_EOL;
-          \$completeHtml .= '<p>Products In Stock: ' . Product::inStock()->count() . '</p>' . PHP_EOL;
-          \$completeHtml .= '</div>' . PHP_EOL;
-          \$completeHtml .= '<div class=\"summary\">' . PHP_EOL;
-          \$completeHtml .= '<h3>Test Summary</h3>' . PHP_EOL;
-          \$completeHtml .= '<p>All category pages and product pages were tested successfully.</p>' . PHP_EOL;
-          \$completeHtml .= '<p>HTTP Status 200 OK received for all tested pages.</p>' . PHP_EOL;
-          \$completeHtml .= '</div>' . PHP_EOL;
-          \$completeHtml .= '<div class=\"content\">' . PHP_EOL;
-          \$completeHtml .= \$allHtml . PHP_EOL;
-          \$completeHtml .= '</div>' . PHP_EOL;
-          \$completeHtml .= '</div>' . PHP_EOL;
-          \$completeHtml .= '</body>' . PHP_EOL;
-          \$completeHtml .= '</html>' . PHP_EOL;
-          
-          \$completeFilename = \$logDir . '/complete_test_results_' . \$timestamp . '.html';
-          file_put_contents(\$completeFilename, \$completeHtml);
-          echo PHP_EOL . 'Complete test results saved to: ' . \$completeFilename . PHP_EOL;
-          echo 'BROWSER SIMULATION TESTS COMPLETED' . PHP_EOL;
-        "
+          $allHtml .= "</body></html>";
+          file_put_contents($logDir . "/complete_" . $timestamp . ".html", $allHtml);
+          echo "BROWSER TESTS COMPLETED" . PHP_EOL;
+        '
     
-    - name: Check Laravel Log for Errors
-      run: |
-        echo "========================================="
-        echo "LARAVEL LOG ERRORS"
-        echo "========================================="
-        if [ -f storage/logs/laravel.log ]; then
-          grep -i "error\|exception\|warning\|critical" storage/logs/laravel.log | tail -50 || echo "No errors found in laravel.log"
-        else
-          echo "laravel.log file not found"
-        fi
-    
-    - name: Upload All HTML Files
+    - name: Upload HTML Files
       if: always()
       uses: actions/upload-artifact@v4
       with:
         name: test-html-outputs
         path: .github/Logs/*.html
-        retention-days: 7
-    
-    - name: Upload Laravel Log
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: laravel-log
-        path: storage/logs/laravel.log
         retention-days: 7
