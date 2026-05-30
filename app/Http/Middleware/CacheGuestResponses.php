@@ -22,8 +22,12 @@ class CacheGuestResponses
         // Return cached response with full headers and status
         if (Cache::has($key)) {
             $cached = Cache::get($key);
-            return response($cached['content'], $cached['status'])
-                ->withHeaders($cached['headers']);
+            
+            if (is_array($cached) && isset($cached['content'])) {
+                return response($cached['content'], $cached['status'])
+                    ->withHeaders($cached['headers']);
+            }
+            Cache::forget($key);
         }
 
         $response = $next($request);

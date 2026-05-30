@@ -20,13 +20,11 @@ Route::middleware('auth')->group(function () {
 });
 
 // Category route
-Route::get('/category/{slug}', [CategoryController::class, 'show'])
-    ->name('category.show')
-    ->where('slug', '.*');
+Route::get('/categories/{category}', [CategoryController::class, 'show'])
+    ->name('category.show');
 
 // Product route
-Route::get('/product/{slug}', [ProductController::class, 'show'])
-    ->name('product.show')
-    ->where('slug', '.*');
+Route::get('/products/{product}', [ProductController::class, 'show'])
+    ->name('product.show');
 
 require __DIR__.'/auth.php';

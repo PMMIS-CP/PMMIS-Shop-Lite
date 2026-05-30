@@ -16,7 +16,7 @@ class AppServiceProvider extends ServiceProvider
         // Register observers once
         \App\Models\Category::observe(\App\Observers\SeoSlugObserver::class);
         \App\Models\Product::observe(\App\Observers\ProductSlugObserver::class);
-        
+
         if ($this->app->runningInConsole()) {
             $this->commands([
                 // ...

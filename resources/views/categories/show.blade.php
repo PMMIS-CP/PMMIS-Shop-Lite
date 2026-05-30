@@ -1,28 +1,26 @@
-<!DOCTYPE html>
-<html dir="{{ app()->getLocale() === 'fa' ? 'rtl' : 'ltr' }}" lang="{{ str_replace('_', '-', app()->getLocale()) }}">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ $category->name }} - {{ config('app.name') }}</title>
-</head>
-<body>
-    <h1>{{ $category->name }}</h1>
-    <p>ID: {{ $category->id }}</p>
-    <p>وضعیت: {{ $category->is_active ? 'فعال' : 'غیرفعال' }}</p>
-    
-    @if($category->parent)
-        <p>دسته مادر: {{ $category->parent->name }}</p>
-    @endif
-    
-    @if($category->children->count() > 0)
-        <h3>زیردسته ها:</h3>
-        <ul>
-            @foreach($category->children as $child)
-                <li>{{ $child->name }}</li>
-            @endforeach
-        </ul>
-    @endif
-    
-    <p>آدرس: {{ $category->url }}</p>
-</body>
-</html>
+<x-app-layout>
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold mb-4">{{ $category->name }}</h1>
+        
+        <div class="bg-white p-6 rounded shadow">
+            <p><strong>{{ __('Status') }}:</strong> {{ $category->is_active ? __('Active') : __('Inactive') }}</p>
+            
+            @if($category->parent)
+                <p><strong>{{ __('Parent Category') }}:</strong> {{ $category->parent->name }}</p>
+            @endif
+        </div>
+
+        @if($category->products->count() > 0)
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+                @foreach($category->products as $product)
+                    <div class="border p-4 rounded">
+                        <a href="{{ $product->url }}">
+                            <h2 class="font-bold">{{ $product->name }}</h2>
+                            <p>{{ $product->formatted_price }}</p>
+                        </a>
+                    </div>
+                @endforeach
+            </div>
+        @endif
+    </div>
+</x-app-layout>

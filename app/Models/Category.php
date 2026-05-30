@@ -97,9 +97,7 @@ class Category extends Model
 
     public function getUrlAttribute(): string
     {
-        $locale = app()->getLocale();
-        $slugColumn = 'slug_' . $locale; 
-        return route('category.show', $this->$slugColumn);
+        return route($this instanceof Category ? 'category.show' : 'product.show', $this);
     }
 
     public function getFullNameAttribute(): string
@@ -154,6 +152,11 @@ class Category extends Model
         return $query->orderBy('sort_order')->orderBy('id');
     }
 
+    public function getRouteKeyName(): string
+    {
+        return 'slug_' . app()->getLocale();
+    }
+    
     // Boot method to handle slug synchronization for SQLite
     protected static function boot()
     {

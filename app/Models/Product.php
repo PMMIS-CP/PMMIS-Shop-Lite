@@ -94,7 +94,7 @@ class Product extends Model
 {
     use HasTranslations, SoftDeletes;
     use HasFactory;
-    
+
     /**
      * The attributes that are mass assignable.
      */
@@ -303,10 +303,7 @@ class Product extends Model
      */
     public function getUrlAttribute(): string
     {
-        $locale = app()->getLocale();
-        $slug = $this->getTranslation('slug', $locale);
-        
-        return route('product.show', $slug);
+        return route($this instanceof Category ? 'category.show' : 'product.show', $this);
     }
 
     /**
@@ -495,5 +492,9 @@ class Product extends Model
             ->orderBy('sort_order')
             ->limit($limit)
             ->get();
+    }
+    public function getRouteKeyName(): string
+    {
+        return 'slug_' . app()->getLocale();
     }
 }

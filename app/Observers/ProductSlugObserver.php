@@ -25,7 +25,8 @@ class ProductSlugObserver
         $locales = array_keys($model->getTranslations('name'));
 
         foreach ($locales as $locale) {
-            $sourceText = $model->getTranslation('name', $locale);
+            $sourceText = $model->getTranslation('name', $locale, false);
+            if (!$sourceText) continue;
             
             $slug = ($locale === 'fa') 
                 ? $this->generatePersianSlug($sourceText) 
