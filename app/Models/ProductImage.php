@@ -42,7 +42,7 @@ use Illuminate\Filesystem\FilesystemAdapter;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ProductImage whereThumbnailMedium($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ProductImage whereThumbnailSmall($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ProductImage whereUpdatedAt($value)
- * @mixin \Eloquent
+ * @mixin \Illuminate\Database\Eloquent\Model
  */
 class ProductImage extends Model
 {

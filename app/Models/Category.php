@@ -57,7 +57,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
  * @method static Builder<static>|Category whereUpdatedAt($value)
  * @method static Builder<static>|Category withTrashed(bool $withTrashed = true)
  * @method static Builder<static>|Category withoutTrashed()
- * @mixin \Eloquent
+ * @mixin \Illuminate\Database\Eloquent\Model
  */
 class Category extends Model
 {

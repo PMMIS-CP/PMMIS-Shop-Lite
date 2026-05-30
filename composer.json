@@ -14,6 +14,7 @@
         "laravel/tinker": "^3.0",
         "league/flysystem-aws-s3-v3": "^3.34",
         "livewire/livewire": "^4.3",
+        "predis/predis": "^3.4",
         "spatie/laravel-responsecache": "^0.0.1",
         "spatie/laravel-translatable": "^6.14"
     },
@@ -36,7 +37,10 @@
             "App\\": "app/",
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/"
-        }
+        },
+        "files": [
+            "app/Helpers/CacheHelper.php"
+        ]
     },
     "autoload-dev": {
         "psr-4": {

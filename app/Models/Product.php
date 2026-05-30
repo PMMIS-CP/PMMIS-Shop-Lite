@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Session;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Facades\Storage;
 
+
 /**
  * @property int $id
  * @property int $category_id
@@ -89,7 +90,7 @@ use Illuminate\Support\Facades\Storage;
  * @method static Builder<static>|Product whereWeight($value)
  * @method static Builder<static>|Product withTrashed(bool $withTrashed = true)
  * @method static Builder<static>|Product withoutTrashed()
- * @mixin \Eloquent
+ * @mixin \Illuminate\Database\Eloquent\Model
  */
 class Product extends Model
 {
@@ -140,12 +141,6 @@ class Product extends Model
         'weight' => 'decimal:3',
         'stock' => 'integer',
         'sort_order' => 'integer',
-        'name' => 'array',
-        'slug' => 'array',
-        'short_description' => 'array',
-        'description' => 'array',
-        'meta_title' => 'array',
-        'meta_description' => 'array',
         'deleted_at' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
@@ -171,11 +166,21 @@ class Product extends Model
         // Consolidated cache clearing
         static::saved(function ($product) {
             Cache::forget("product_{$product->id}");
-            Cache::tags(['products'])->flush();
+            // پاک کردن تگ فقط در صورت وجود
+            try {
+                Cache::tags(['products'])->flush();
+            } catch (\BadMethodCallException $e) {
+                // Cache driver از tagging پشتیبانی نمی‌کند، کاری نکن
+            }
         });
 
-        static::deleted(function () {
-            Cache::tags(['products'])->flush();
+        static::deleted(function ($product) {
+            Cache::forget("product_{$product->id}");
+            try {
+                Cache::tags(['products'])->flush();
+            } catch (\BadMethodCallException $e) {
+                // Cache driver از tagging پشتیبانی نمی‌کند، کاری نکن
+            }
         });
 
         // SQLite compatibility: sync slug_* columns
@@ -496,6 +501,10 @@ class Product extends Model
     }
     public function getRouteKeyName(): string
     {
+        if (app()->runningInConsole() || request()->is('admin*')) {
+            return 'id'; 
+        }
+        
         return 'slug_' . app()->getLocale();
     }
 }
