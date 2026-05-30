@@ -1,10 +1,27 @@
 includes:
-    - vendor/nunomaduro/larastan/extension.neon
+    - vendor/larastan/larastan/extension.neon
 
 parameters:
+    # Level 5 is the sweet spot for Laravel projects
     level: 5
+
     paths:
         - app
+        - database/factories
+        - database/seeders
         - tests
-    
-    treatPhpDocTypesAsCertain: false
+
+    # Prevents "Unmatched ignored error" when code is fixed
+    reportUnmatchedIgnoredErrors: false
+
+    # Standard exclusions to keep the analysis fast and focused
+    excludePaths:
+        - database/migrations/*
+        - bootstrap/cache/*
+        - storage/*
+
+    # Laravel-specific handling for models and dynamic methods
+    # These settings help Larastan understand Eloquent magic better
+    ignoreErrors:
+        # If you encounter specific false positives, add them here.
+        # Example: '#Access to an undefined property .*#'

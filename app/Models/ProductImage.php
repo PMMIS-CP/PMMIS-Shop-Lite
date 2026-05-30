@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Storage;
-
+use Illuminate\Filesystem\FilesystemAdapter;
 
 /**
  * @property int $id
@@ -47,7 +47,7 @@ use Illuminate\Support\Facades\Storage;
 class ProductImage extends Model
 {
     protected $table = 'product_images';
-    
+
     protected $fillable = [
         'product_id',
         'path',
@@ -63,8 +63,8 @@ class ProductImage extends Model
 
     protected $casts = [
         'is_featured' => 'boolean',
-        'sort_order' => 'integer',
-        'file_size' => 'integer',
+        'sort_order'  => 'integer',
+        'file_size'   => 'integer',
     ];
 
     /**
@@ -76,11 +76,19 @@ class ProductImage extends Model
     }
 
     /**
+     * Get the S3 disk instance.
+     */
+    private function getDisk(): FilesystemAdapter
+    {
+        return Storage::disk('s3');
+    }
+
+    /**
      * Get full S3 URL for original image.
      */
     public function getUrlAttribute(): string
     {
-        return app('filesystem')->disk('s3')->url($this->path);
+        return $this->getDisk()->url($this->path);
     }
 
     /**
@@ -88,13 +96,7 @@ class ProductImage extends Model
      */
     public function getSmallThumbnailUrlAttribute(): ?string
     {
-        if (!$this->thumbnail_small) {
-            return null;
-        }
-        
-        /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
-        $disk = Storage::disk('s3');
-        return $disk->url($this->thumbnail_small);
+        return $this->thumbnail_small ? $this->getDisk()->url($this->thumbnail_small) : null;
     }
 
     /**
@@ -102,13 +104,7 @@ class ProductImage extends Model
      */
     public function getMediumThumbnailUrlAttribute(): ?string
     {
-        if (!$this->thumbnail_medium) {
-            return null;
-        }
-        
-        /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
-        $disk = Storage::disk('s3');
-        return $disk->url($this->thumbnail_medium);
+        return $this->thumbnail_medium ? $this->getDisk()->url($this->thumbnail_medium) : null;
     }
 
     /**
@@ -116,29 +112,23 @@ class ProductImage extends Model
      */
     public function getLargeThumbnailUrlAttribute(): ?string
     {
-        if (!$this->thumbnail_large) {
-            return null;
-        }
-        
-        /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
-        $disk = Storage::disk('s3');
-        return $disk->url($this->thumbnail_large);
+        return $this->thumbnail_large ? $this->getDisk()->url($this->thumbnail_large) : null;
     }
 
     /**
-     * Set as featured image (removes other featured images for this product).
+     * Set as featured image and reset other featured images for the same product.
      */
     public function setAsFeatured(): void
     {
         static::where('product_id', $this->product_id)
             ->where('id', '!=', $this->id)
             ->update(['is_featured' => false]);
-        
+
         $this->update(['is_featured' => true]);
     }
 
     /**
-     * Delete image and all thumbnails from S3.
+     * Delete image and all thumbnails from S3 storage.
      */
     public function deleteFromStorage(): void
     {
@@ -148,20 +138,20 @@ class ProductImage extends Model
             $this->thumbnail_medium,
             $this->thumbnail_large,
         ]);
-        
+
         foreach ($paths as $path) {
-            if ($path && Storage::disk('s3')->exists($path)) {
-                Storage::disk('s3')->delete($path);
+            if ($this->getDisk()->exists($path)) {
+                $this->getDisk()->delete($path);
             }
         }
     }
 
     /**
-     * Delete model and remove files from storage.
+     * Bootstrap the model and handle storage cleanup on delete.
      */
     protected static function booted(): void
     {
-        static::deleting(function ($image) {
+        static::deleting(function (self $image) {
             $image->deleteFromStorage();
         });
     }

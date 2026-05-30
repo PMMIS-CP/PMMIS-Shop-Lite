@@ -10,6 +10,7 @@ use Spatie\Translatable\HasTranslations;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * @property int $id
@@ -301,9 +302,9 @@ class Product extends Model
     /**
      * Get product URL with current locale slug.
      */
-    public function getUrlAttribute(): string
-    {
-        return route($this instanceof Category ? 'category.show' : 'product.show', $this);
+    public function getUrlAttribute(): string 
+    { 
+        return route('product.show', $this); 
     }
 
     /**

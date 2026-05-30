@@ -95,11 +95,11 @@ class Category extends Model
         return $this->children()->with('descendants');
     }
 
-    public function getUrlAttribute(): string
-    {
-        return route($this instanceof Category ? 'category.show' : 'product.show', $this);
+    public function getUrlAttribute(): string 
+    { 
+        return route('category.show', $this); 
     }
-
+    
     public function getFullNameAttribute(): string
     {
         // Build full name without N+1 (assumes parent chain is eager loaded)
@@ -155,6 +155,11 @@ class Category extends Model
     public function getRouteKeyName(): string
     {
         return 'slug_' . app()->getLocale();
+    }
+
+    public function activeProducts(): HasMany
+    {
+        return $this->hasMany(Product::class)->where('is_active', true);
     }
     
     // Boot method to handle slug synchronization for SQLite

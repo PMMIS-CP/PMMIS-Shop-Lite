@@ -15,7 +15,7 @@ class CategoryController extends Controller
         $category->load(['parent.parent']);
 
         $products = $category->products()
-            ->active()
+            ->where('is_active', true)
             ->orderBy('sort_order', 'asc')
             ->paginate(24);
 

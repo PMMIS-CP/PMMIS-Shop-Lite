@@ -1,10 +1,11 @@
 name: Laravel CI/CD Pipeline
 
-on: workflow_dispatch
-# on:
-#   push:
-#   pull_request:
-#     branches: [ main ]
+# on: workflow_dispatch
+
+on:
+  push:
+  pull_request:
+    branches: [ main ]
 
 jobs:
   setup-and-lint:
