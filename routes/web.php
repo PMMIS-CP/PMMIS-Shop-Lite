@@ -23,8 +23,12 @@ Route::middleware('auth')->group(function () {
 Route::get('/categories/{category}', [CategoryController::class, 'show'])
     ->name('category.show');
 
+// List Product
+Route::get('/products', [ProductController::class, 'index'])
+    ->name('product.index');
+
 // Product route
-Route::get('/products/{product}', [ProductController::class, 'show'])
+Route::get('/products/{product}', [ProductController::class, 'show']) 
     ->name('product.show');
 
 require __DIR__.'/auth.php';

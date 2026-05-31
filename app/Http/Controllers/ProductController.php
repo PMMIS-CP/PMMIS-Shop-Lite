@@ -9,6 +9,19 @@ use Illuminate\Support\Facades\Cache;
 class ProductController extends Controller
 {
     /**
+     * Display a listing of products.
+     */
+    public function index(): View
+    {
+        $products = Product::active()
+            ->inStock()
+            ->orderBy('sort_order')
+            ->paginate(12);
+            
+        return view('products.index', compact('products'));
+    }
+
+    /**
      * Display the product details.
      */
     public function show(Product $product): View
