@@ -24,7 +24,22 @@ class ProductResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
-    protected static ?string $recordTitleAttribute = 'name';
+    // protected static ?string $recordTitleAttribute = 'name';
+    
+    public static function getRecordTitle($record): string|\Illuminate\Contracts\Support\Htmlable|null
+    {
+        $locale = app()->getLocale();
+        
+        if (is_array($record->name)) {
+            return $record->name[$locale] 
+                ?? $record->name['en'] 
+                ?? $record->name['fa'] 
+                ?? array_values($record->name)[0] 
+                ?? 'Untitled';
+        }
+        
+        return (string) $record->name;
+    }
 
     public static function form(Schema $schema): Schema
     {

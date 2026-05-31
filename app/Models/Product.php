@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\{BelongsTo, HasMany, HasOne};
 use Illuminate\Database\Eloquent\Builder;
-use Spatie\Translatable\HasTranslations;
+// use Spatie\Translatable\HasTranslations;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -94,8 +94,7 @@ use Illuminate\Support\Facades\Storage;
  */
 class Product extends Model
 {
-    use HasTranslations, SoftDeletes;
-    use HasFactory;
+    use SoftDeletes, HasFactory;
 
     /**
      * The attributes that are mass assignable.
@@ -117,19 +116,20 @@ class Product extends Model
         'description',
         'meta_title',
         'meta_description',
+        'slug_fa', 'slug_en'
     ];
 
-    /**
-     * The attributes that are translatable.
-     */
-    public array $translatable = [
-        'name',
-        'slug',
-        'short_description',
-        'description',
-        'meta_title',
-        'meta_description',
-    ];
+    // /**
+    //  * The attributes that are translatable.
+    //  */
+    // public array $translatable = [
+    //     'name',
+    //     'slug',
+    //     'short_description',
+    //     'description',
+    //     'meta_title',
+    //     'meta_description',
+    // ];
 
     /**
      * The attributes that should be cast.
@@ -142,10 +142,19 @@ class Product extends Model
         'stock' => 'integer',
         'sort_order' => 'integer',
         'deleted_at' => 'datetime',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
+        // تعریف فیلدهای JSON برای تبدیل خودکار به آرایه
+        'name' => 'array',
+        'slug' => 'array',
+        'short_description' => 'array',
+        'description' => 'array',
+        'meta_title' => 'array',
+        'meta_description' => 'array',
     ];
 
+    public function getTranslation(string $key, string $locale): ?string
+    {
+        return $this->$key[$locale] ?? null;
+    }
     /**
      * The accessors to append to the model's array form.
      */
@@ -163,42 +172,22 @@ class Product extends Model
     {
         parent::boot();
 
-        // Consolidated cache clearing
+        static::updating(function ($product) {
+            if ($product->isDirty('sku')) {
+                $product->sku = $product->getOriginal('sku');
+            }
+        });
+
         static::saved(function ($product) {
             Cache::forget("product_{$product->id}");
-            // پاک کردن تگ فقط در صورت وجود
-            try {
-                Cache::tags(['products'])->flush();
-            } catch (\BadMethodCallException $e) {
-                // Cache driver از tagging پشتیبانی نمی‌کند، کاری نکن
-            }
         });
 
-        static::deleted(function ($product) {
-            Cache::forget("product_{$product->id}");
-            try {
-                Cache::tags(['products'])->flush();
-            } catch (\BadMethodCallException $e) {
-                // Cache driver از tagging پشتیبانی نمی‌کند، کاری نکن
+        static::saving(function ($product) {
+            if (config('database.default') === 'sqlite') {
+                $product->slug_fa = $product->slug['fa'] ?? null;
+                $product->slug_en = $product->slug['en'] ?? null;
             }
         });
-
-        // SQLite compatibility: sync slug_* columns
-        $connection = config('database.default');
-        $driver = config("database.connections.{$connection}.driver");
-        
-        if ($driver === 'sqlite') {
-            static::saving(function ($product) {
-                $locales = ['fa', 'en'];
-                foreach ($locales as $locale) {
-                    $slugField = 'slug_' . $locale;
-                    $slugValue = $product->getTranslation('slug', $locale);
-                    if ($slugValue) {
-                        $product->$slugField = $slugValue;
-                    }
-                }
-            });
-        }
     }
 
     /*
@@ -318,13 +307,7 @@ class Product extends Model
     public function getLocalizedNameAttribute(): string
     {
         $locale = app()->getLocale();
-        $name = $this->getTranslation('name', $locale);
-        
-        if (empty($name) && $locale !== 'en') {
-            $name = $this->getTranslation('name', 'en');
-        }
-        
-        return $name ?? 'Unnamed Product';
+        return $this->name[$locale] ?? ($this->name['en'] ?? 'Unnamed Product');
     }
 
     /**
@@ -333,13 +316,7 @@ class Product extends Model
     public function getLocalizedShortDescriptionAttribute(): ?string
     {
         $locale = app()->getLocale();
-        $description = $this->getTranslation('short_description', $locale);
-        
-        if (empty($description) && $locale !== 'en') {
-            $description = $this->getTranslation('short_description', 'en');
-        }
-        
-        return $description;
+        return $this->short_description[$locale] ?? ($this->short_description['en'] ?? null);
     }
 
     /**
@@ -348,13 +325,7 @@ class Product extends Model
     public function getLocalizedDescriptionAttribute(): ?string
     {
         $locale = app()->getLocale();
-        $description = $this->getTranslation('description', $locale);
-        
-        if (empty($description) && $locale !== 'en') {
-            $description = $this->getTranslation('description', 'en');
-        }
-        
-        return $description;
+        return $this->description[$locale] ?? ($this->description['en'] ?? null);
     }
 
     /*
@@ -435,22 +406,15 @@ class Product extends Model
      */
     public function scopeSearch(Builder $query, ?string $searchTerm): Builder
     {
-        if (empty($searchTerm)) {
-            return $query;
-        }
+        if (empty($searchTerm)) return $query;
 
         $locale = app()->getLocale();
-        
         return $query->where(function ($q) use ($searchTerm, $locale) {
+            // جستجو در JSON
             $q->where("name->{$locale}", 'LIKE', "%{$searchTerm}%")
               ->orWhere('sku', 'LIKE', "%{$searchTerm}%");
-              
-            if ($locale !== 'en') {
-                $q->orWhere("name->en", 'LIKE', "%{$searchTerm}%");
-            }
         });
     }
-
     /*
     |--------------------------------------------------------------------------
     | Helper Methods
@@ -499,12 +463,12 @@ class Product extends Model
             ->limit($limit)
             ->get();
     }
+
     public function getRouteKeyName(): string
     {
         if (app()->runningInConsole() || request()->is('admin*')) {
             return 'id'; 
         }
-        
         return 'slug_' . app()->getLocale();
     }
 }

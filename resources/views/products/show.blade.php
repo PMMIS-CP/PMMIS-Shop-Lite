@@ -4,7 +4,7 @@
             
             <div class="space-y-4">
                 <div class="aspect-square bg-gray-100 rounded-lg overflow-hidden">
-                    <img :src="activeImage" alt="{{ $product->name }}" class="w-full h-full object-cover">
+                    <img :src="activeImage" alt="{{ $product->localized_name }}" class="w-full h-full object-cover">
                 </div>
                 <div class="flex gap-2 overflow-x-auto">
                     @foreach($product->images as $image)
@@ -16,11 +16,11 @@
             </div>
 
             <div class="space-y-6">
-                <h1 class="text-3xl font-bold">{{ $product->name }}</h1>
+                <h1 class="text-3xl font-bold">{{ $product->localized_name }}</h1>
                 <p class="text-2xl text-blue-600 font-semibold">{{ $product->formatted_price }}</p>
                 
                 <div class="prose max-w-none">
-                    {!! $product->description !!}
+                    {!! $product->localized_description !!}
                 </div>
 
                 <div class="pt-4">
