@@ -31,7 +31,8 @@ return new class extends Migration
             
             // Multilingual JSON fields (exactly matching Category pattern)
             $table->json('name');
-            $table->json('slug')->unique();
+            // $table->json('slug')->unique();
+            $table->json('slug');
             $table->json('short_description')->nullable();
             $table->json('description')->nullable();
             $table->json('meta_title')->nullable();

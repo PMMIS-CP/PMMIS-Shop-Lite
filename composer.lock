@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "294569c4aba68a47f112c65c41f8fbf5",
+    "content-hash": "e9c04d6427f8f9e5268939686899cfd4",
     "packages": [
         {
             "name": "aws/aws-crt-php",
@@ -5498,6 +5498,56 @@
                 "source": "https://github.com/ramsey/uuid/tree/4.9.2"
             },
             "time": "2025-12-14T04:43:48+00:00"
+        },
+        {
+            "name": "rmitesh/filament-action",
+            "version": "v1.0.6",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/rmitesh/filament-action.git",
+                "reference": "60edf474a0241672253c7a351e1b55ac305982bb"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/rmitesh/filament-action/zipball/60edf474a0241672253c7a351e1b55ac305982bb",
+                "reference": "60edf474a0241672253c7a351e1b55ac305982bb",
+                "shasum": ""
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Rmitesh\\FilamentAction\\FilamentActionServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Rmitesh\\FilamentAction\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Mitesh Rathod",
+                    "email": "meet.drive32@gmail.com"
+                }
+            ],
+            "description": "Creates a Filament table action.",
+            "keywords": [
+                "filament",
+                "filament-action",
+                "laravel",
+                "rmitesh"
+            ],
+            "support": {
+                "issues": "https://github.com/rmitesh/filament-action/issues",
+                "source": "https://github.com/rmitesh/filament-action/tree/v1.0.6"
+            },
+            "time": "2023-05-20T22:00:32+00:00"
         },
         {
             "name": "ryangjchandler/blade-capture-directive",
