@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\{BelongsTo, HasMany, HasOne};
 use Illuminate\Database\Eloquent\Builder;
-// use Spatie\Translatable\HasTranslations;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -109,7 +108,6 @@ class Product extends Model
         'is_active',
         'is_featured',
         'focus_keyword',
-        // Multilingual fields
         'name',
         'slug',
         'short_description',
@@ -118,18 +116,6 @@ class Product extends Model
         'meta_description',
         'slug_fa', 'slug_en'
     ];
-
-    // /**
-    //  * The attributes that are translatable.
-    //  */
-    // public array $translatable = [
-    //     'name',
-    //     'slug',
-    //     'short_description',
-    //     'description',
-    //     'meta_title',
-    //     'meta_description',
-    // ];
 
     /**
      * The attributes that should be cast.
@@ -142,7 +128,6 @@ class Product extends Model
         'stock' => 'integer',
         'sort_order' => 'integer',
         'deleted_at' => 'datetime',
-        // تعریف فیلدهای JSON برای تبدیل خودکار به آرایه
         'name' => 'array',
         'slug' => 'array',
         'short_description' => 'array',
@@ -155,6 +140,7 @@ class Product extends Model
     {
         return $this->$key[$locale] ?? null;
     }
+
     /**
      * The accessors to append to the model's array form.
      */
@@ -410,7 +396,6 @@ class Product extends Model
 
         $locale = app()->getLocale();
         return $query->where(function ($q) use ($searchTerm, $locale) {
-            // جستجو در JSON
             $q->where("name->{$locale}", 'LIKE', "%{$searchTerm}%")
               ->orWhere('sku', 'LIKE', "%{$searchTerm}%");
         });
