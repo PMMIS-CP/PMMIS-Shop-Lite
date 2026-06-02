@@ -36,7 +36,7 @@ class ImageUploadService
     /**
      * Upload a product image directly to S3 without local disk write.
      */
-    public function upload(UploadedFile $file, int $productId, ?string $altText = null, bool $isFeatured = false): ProductImage
+    public function upload(UploadedFile $file, int $productId, ?string $altText = null, bool $isFeatured = false, int $sortOrder = 0): ProductImage
     {
         // Validate file
         $this->validateFile($file);
@@ -66,6 +66,7 @@ class ImageUploadService
             'thumbnail_medium' => $thumbnails['medium'] ?? null,
             'thumbnail_large' => $thumbnails['large'] ?? null,
             'is_featured' => $isFeatured,
+            'sort_order' => $sortOrder,
             'alt_text' => $altText ?? $originalName,
             'mime_type' => 'image/webp',
             'file_size' => $file->getSize(),
