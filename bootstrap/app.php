@@ -8,6 +8,10 @@ use App\Http\Middleware\OptimizeResponse\AddSecurityHeaders;
 use App\Http\Middleware\OptimizeResponse\AddCacheHeaders;
 use App\Http\Middleware\CacheGuestResponses;
 use Illuminate\Support\Facades\Route;
+use App\Http\Middleware\LogRequest;
+use App\Http\Middleware\DecodeSlug;
+use App\Http\Middleware\AdminMiddleware;
+use Illuminate\Support\Facades\Log;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -23,9 +27,10 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         // Global middleware (runs for every request)
+        $middleware->append(LogRequest::class);
         $middleware->append(OptimizeHtml::class);
         $middleware->append(AddSecurityHeaders::class);
-        $middleware->append(\App\Http\Middleware\DecodeSlug::class);
+        $middleware->append(DecodeSlug::class);
         
         // Web group middleware: CacheGuestResponses must run first to capture final response
         $middleware->web(prepend: [
@@ -35,9 +40,15 @@ return Application::configure(basePath: dirname(__DIR__))
         
         // Admin
         $middleware->alias([
-        '   admin' => \App\Http\Middleware\AdminMiddleware::class,
-        ]);
+                'admin' => AdminMiddleware::class, 
+            ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+            $exceptions->report(function (Throwable $e) {
+                Log::error('Global Error Caught:', [
+                    'message' => $e->getMessage(),
+                    'file'    => $e->getFile(),
+                    'line'    => $e->getLine(),
+                ]);
+            });
     })->create();
