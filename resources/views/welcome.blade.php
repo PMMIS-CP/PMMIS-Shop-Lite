@@ -17,11 +17,23 @@
                     <a href="#" class="text-gray-600 hover:text-blue-600 transition-colors duration-200 no-underline">تخفیف‌ها</a>
                     <a href="#" class="text-gray-600 hover:text-blue-600 transition-colors duration-200 no-underline">تماس با ما</a>
                     @auth
-                        <a href="{{ url('/dashboard') }}" class="inline-block px-5 py-2 rounded-lg font-medium bg-blue-600 text-white hover:bg-blue-700 transition-all duration-200 no-underline">پیشخوان</a>
+                        @if(auth()->user()->is_admin)
+                            <a href="{{ route('admin.dashboard') }}" class="inline-block px-5 py-2 rounded-lg font-medium bg-blue-600 text-white hover:bg-blue-700 transition-all duration-200 no-underline">
+                                پنل مدیریت
+                            </a>
+                        @else
+                            <a href="{{ url('/dashboard') }}" class="inline-block px-5 py-2 rounded-lg font-medium bg-blue-600 text-white hover:bg-blue-700 transition-all duration-200 no-underline">
+                                پیشخوان
+                            </a>
+                        @endif
                     @else
-                        <a href="{{ route('login') }}" class="inline-block px-5 py-2 rounded-lg font-medium border border-gray-300 text-gray-600 hover:border-blue-600 hover:text-blue-600 transition-all duration-200 no-underline">ورود</a>
+                        <a href="{{ route('login') }}" class="inline-block px-5 py-2 rounded-lg font-medium border border-gray-300 text-gray-600 hover:border-blue-600 hover:text-blue-600 transition-all duration-200 no-underline">
+                            ورود
+                        </a>
                         @if (Route::has('register'))
-                            <a href="{{ route('register') }}" class="inline-block px-5 py-2 rounded-lg font-medium bg-blue-600 text-white hover:bg-blue-700 transition-all duration-200 no-underline">ثبت‌نام</a>
+                            <a href="{{ route('register') }}" class="inline-block px-5 py-2 rounded-lg font-medium bg-blue-600 text-white hover:bg-blue-700 transition-all duration-200 no-underline">
+                                ثبت‌نام
+                            </a>
                         @endif
                     @endauth
                 </div>
@@ -32,7 +44,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
                 <div>
-                    <h1 class="text-4xl sm:text-5xl font-extrabold leading-tight mb-6 bg-gradient-to-r from-gray-900 to-blue-600 bg-clip-text text-transparent">
+                    <h1 class="text-4xl sm:text-5xl font-extrabold leading-tight mb-6 bg-linear-to-r from-gray-900 to-blue-600 bg-clip-text text-transparent">
                         خرید آسان،<br>
                         تحویل سریع
                     </h1> <!-- یبلیبلیل -->

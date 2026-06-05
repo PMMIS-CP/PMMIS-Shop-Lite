@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Middleware\LogRequest;
 use App\Http\Middleware\DecodeSlug;
 use App\Http\Middleware\AdminMiddleware;
+use App\Http\Middleware\RedirectToAdminLogin;
 use Illuminate\Support\Facades\Log;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -38,10 +39,18 @@ return Application::configure(basePath: dirname(__DIR__))
             AddCacheHeaders::class,
         ]);
         
-        // Admin
+        // Admin middleware aliases
         $middleware->alias([
-                'admin' => AdminMiddleware::class, 
-            ]);
+            'admin'             => AdminMiddleware::class,
+            'admin.guest'       => RedirectToAdminLogin::class,
+        ]);
+        
+        $middleware->redirectGuestsTo(function (\Illuminate\Http\Request $request) {
+        if ($request->is('admin/*') || $request->is('admin')) {
+            return route('admin.login');
+        }
+        return route('login');
+        });
     })
     ->withExceptions(function (Exceptions $exceptions): void {
             $exceptions->report(function (Throwable $e) {
